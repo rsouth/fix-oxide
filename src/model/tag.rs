@@ -5,9 +5,9 @@ use core::fmt;
 #[allow(dead_code)]
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, Ord, PartialOrd)]
 pub enum Tag {
-    MsgType, // = 35
-    Text,    // = 58
-    ClOrdId, // = 11
+    MsgType,
+    Text,
+    ClOrdId,
 }
 
 impl Tag {

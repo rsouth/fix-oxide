@@ -71,18 +71,6 @@ impl fmt::Display for Field {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let separator = '|';
         write!(f, "{}", self.to_ssttrr(separator))
-        // match self {
-        //     // &char
-        //     Field::Char(t, v) => write!(f, "{}={}{}", t.num(), v, separator),
-        //     // &i32
-        //     Field::Int(t, v) => write!(f, "{}={}{}", t.num(), v, separator),
-        //     // &u128
-        //     Field::TagNum(t, v) | Field::SeqNum(t, v) => {
-        //         write!(f, "{}={}{}", t.num(), v, separator)
-        //     }
-        //     // &String
-        //     Field::String(t, v) => write!(f, "{}={}{}", t.num(), v, separator),
-        // }
     }
 }
 
