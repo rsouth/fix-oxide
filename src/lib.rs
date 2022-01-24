@@ -1,6 +1,9 @@
 #![warn(clippy::all, clippy::pedantic, clippy::nursery, clippy::cargo)]
 
 pub mod model;
+pub mod session;
+pub mod application;
+pub mod engine;
 
 #[cfg(test)]
 mod tests {
