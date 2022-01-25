@@ -4,10 +4,11 @@ pub mod tag;
 
 #[cfg(test)]
 mod tests {
+    use std::ops::AddAssign;
+
     use crate::model::field::{Field, FieldSet};
     use crate::model::message::{Logon, Message, MsgType};
     use crate::model::tag::Tag;
-    use std::ops::AddAssign;
 
     #[test]
     fn basic_fieldset_tests() {

@@ -1,4 +1,3 @@
-
 // used to refer to a session
 #[derive(Clone, Eq, PartialEq, Hash)]
 pub struct SessionID {
@@ -27,7 +26,8 @@ impl From<BeginString> for String {
 
 #[derive(Copy, Debug, Clone)]
 enum BeginString {
-    Fix42, Fix44
+    Fix42,
+    Fix44,
 }
 
 #[derive(Clone, Debug)]
@@ -41,9 +41,9 @@ pub struct Settings {
 
 #[derive(Debug, Clone, Copy)]
 enum SessionType {
-    Initiator, Acceptor
+    Initiator,
+    Acceptor,
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -58,7 +58,7 @@ mod tests {
             begin_string: BeginString::Fix42,
             sender_comp_id: "Rocks".to_string(),
             target_comp_id: "Exchange".to_string(),
-            session_type: SessionType::Initiator
+            session_type: SessionType::Initiator,
         };
 
         let session_id = engine.create_session(settings).unwrap().to_owned();
@@ -68,7 +68,7 @@ mod tests {
             begin_string: BeginString::Fix42,
             sender_comp_id: "Rocks".to_string(),
             target_comp_id: "Exchange".to_string(),
-            session_type: SessionType::Initiator
+            session_type: SessionType::Initiator,
         };
         assert!(engine.create_session(settings).is_err());
         assert_eq!(1, engine.sessions().len());
@@ -76,7 +76,5 @@ mod tests {
         // let mut engine = engine;
         // let engine = engine;
         assert_eq!(&State::Created, engine.session_status(&session_id).unwrap());
-
     }
 }
-

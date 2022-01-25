@@ -1,6 +1,7 @@
-use crate::model::field::Field;
 use core::convert::Into;
 use core::fmt;
+
+use crate::model::field::Field;
 
 #[allow(dead_code)]
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, Ord, PartialOrd)]

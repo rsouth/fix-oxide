@@ -1,9 +1,10 @@
-use crate::model::tag::Tag;
 use core::fmt;
 use std::borrow::BorrowMut;
 use std::collections::hash_map::Values;
 use std::collections::HashMap;
 use std::fmt::Formatter;
+
+use crate::model::tag::Tag;
 
 #[derive(Default, Debug, Clone)]
 pub struct FieldSet {
@@ -70,12 +71,12 @@ impl Field {
 impl fmt::Display for Field {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let separator = '|';
-        write!(f, "{}", self.to_ssttrr(separator))
+        write!(f, "{}", self.to_delimited_string(separator))
     }
 }
 
 impl Field {
-    pub fn to_ssttrr(&self, separator: char) -> String {
+    pub fn to_delimited_string(&self, separator: char) -> String {
         match self {
             // &char
             Field::Char(t, v) => format!("{}={}{}", t.num(), v, separator),

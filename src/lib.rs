@@ -1,10 +1,11 @@
+#![feature(box_syntax)]
 #![warn(clippy::all, clippy::pedantic, clippy::nursery, clippy::cargo)]
 
+pub mod application;
+pub mod cracker;
+pub mod engine;
 pub mod model;
 pub mod session;
-pub mod application;
-pub mod engine;
-pub mod cracker;
 
 #[cfg(test)]
 mod tests {
