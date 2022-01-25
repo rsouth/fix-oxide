@@ -4,6 +4,7 @@ pub mod model;
 pub mod session;
 pub mod application;
 pub mod engine;
+pub mod cracker;
 
 #[cfg(test)]
 mod tests {

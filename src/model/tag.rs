@@ -20,6 +20,12 @@ impl Tag {
     }
 }
 
+impl From<u16> for Tag {
+    fn from(_: u16) -> Self {
+        Tag::Text
+    }
+}
+
 impl Into<Tag> for &Field {
     fn into(self) -> Tag {
         match self {
