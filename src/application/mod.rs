@@ -1,5 +1,6 @@
-use crate::model::message::{Logon, Message};
 use std::any::Any;
+
+use crate::model::message::{Logon, Message};
 
 pub trait FixApp {
     fn as_any(&self) -> &dyn Any; // todo no no no

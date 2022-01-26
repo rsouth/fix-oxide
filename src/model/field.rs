@@ -22,15 +22,26 @@ impl fmt::Display for NoSuchField {
 }
 
 impl FieldSet {
+    #[must_use]
+    pub fn with(fields: Vec<Field>) -> FieldSet {
+        FieldSet {
+            fields: fields.into_iter().map(|k| (k.tag(), k)).collect(),
+        }
+    }
+
     pub fn set_field(&mut self, field: Field) {
         let key = field.tag();
         self.fields.borrow_mut().insert(key, field);
     }
 
+    /// # Errors
+    ///
+    /// Will return `Err` if a field for `tag` is not present in the `FieldSet`
     pub fn get_field(&self, tag: Tag) -> Result<&Field, NoSuchField> {
         self.fields.get(&tag).ok_or(NoSuchField { tag })
     }
 
+    #[must_use]
     pub fn iter(&self) -> Values<'_, Tag, Field> {
         self.fields.values()
     }
@@ -44,6 +55,33 @@ pub enum Field {
 
     String(Tag, String),
     Char(Tag, char),
+}
+
+impl TryFrom<String> for Field {
+    type Error = ();
+
+    fn try_from(s: String) -> Result<Self, Self::Error> {
+        println!("From<String> for Field: {}", &s);
+        let two_parts = s.split_once('=');
+        match two_parts {
+            None => Err(()),
+            Some((s_tag, s_value)) => {
+                println!("parsing tag: {}, field: {} into Field", s_tag, s_value);
+
+                // figure out the tag
+                let tag_num: u16 = s_tag.parse::<u16>().unwrap();
+                let tag = Tag::from(tag_num);
+
+                // build field using the tag & value
+                let field = match tag {
+                    Tag::MsgType | Tag::Text | Tag::ClOrdId => {
+                        Field::String(tag, s_value.to_string())
+                    }
+                };
+                Ok(field)
+            }
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -76,6 +114,7 @@ impl fmt::Display for Field {
 }
 
 impl Field {
+    #[must_use]
     pub fn to_delimited_string(&self, separator: char) -> String {
         match self {
             // &char
@@ -92,6 +131,7 @@ impl Field {
         .to_string()
     }
 
+    #[must_use]
     pub fn to_bytes(&self) -> Box<[u8]> {
         // let separator = '\x01';
         Box::from(self.to_string().as_bytes().clone())

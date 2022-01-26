@@ -3,6 +3,7 @@ use core::default::Default;
 use std::fmt;
 
 use crate::model::field::{Field, FieldSet};
+use crate::model::message;
 use crate::model::tag::Tag;
 
 #[derive(Debug, Eq, PartialEq)]
@@ -10,6 +11,7 @@ pub enum MsgType {
     Unknown,
     NotSet,
     Logon,
+    // NewOrderSingle,
 }
 
 #[derive(Debug, Clone)]
@@ -62,6 +64,37 @@ mod tests {
             105_u8, 110_u8, 103_u8, 1_u8,
         ];
         assert_eq!(expected, msg.to_bytes());
+    }
+}
+
+impl TryFrom<FieldSet> for Box<dyn Message> {
+    type Error = ();
+
+    fn try_from(field_set: FieldSet) -> Result<Self, Self::Error> {
+        let maybe_message = match field_set.get_field(Tag::MsgType) {
+            Ok(field) => {
+                let msg_type = MsgType::from(field.string_value().unwrap());
+                match msg_type {
+                    MsgType::Logon => Ok(Box::new(message::Logon::default())),
+                    // MsgType::NewOrderSingle => Ok(crate::model::message::NewOrderSingle::default()),
+                    _ => Err(()),
+                }
+            }
+            Err(_) => Err(()),
+        };
+
+        match maybe_message {
+            Ok(mut boxed_message) => {
+                for field in field_set.iter() {
+                    if field.tag() != Tag::MsgType {
+                        //  todo shouldn't need this. is there a way we can determine which fields are for header? a mapping mayhaps
+                        boxed_message.body_mut().set_field(field.clone());
+                    }
+                }
+                Ok(boxed_message)
+            }
+            Err(_) => Err(()),
+        }
     }
 }
 

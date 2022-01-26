@@ -1,4 +1,3 @@
-use core::convert::Into;
 use core::fmt;
 
 use crate::model::field::Field;
@@ -12,6 +11,7 @@ pub enum Tag {
 }
 
 impl Tag {
+    #[must_use]
     pub const fn num(&self) -> u16 {
         match *self {
             Tag::MsgType => 35,
@@ -22,19 +22,24 @@ impl Tag {
 }
 
 impl From<u16> for Tag {
-    fn from(_: u16) -> Self {
-        Tag::Text
+    fn from(input: u16) -> Self {
+        match input {
+            11 => Self::ClOrdId,
+            35 => Self::MsgType,
+            58 => Self::Text,
+            _ => Self::Text, // change this to try_from ??? and Err here
+        }
     }
 }
 
-impl Into<Tag> for &Field {
-    fn into(self) -> Tag {
-        match self {
+impl From<&Field> for Tag {
+    fn from(value: &Field) -> Self {
+        match value {
             Field::String(t, _)
             | Field::Char(t, _)
             | Field::Int(t, _)
             | Field::TagNum(t, _)
-            | Field::SeqNum(t, _) => t.clone(),
+            | Field::SeqNum(t, _) => *t,
         }
     }
 }
