@@ -6,7 +6,7 @@ use crate::model::message::Message;
 use crate::model::tag::Tag;
 
 struct Cracker<'a> {
-    app: Box<dyn FixApp + 'a>, // app: dyn &FixApp,
+    app: Box<dyn FixApp + 'a>,
 }
 
 // todo link to FixApplication...
@@ -25,12 +25,9 @@ impl Cracker<'_> {
             .collect();
 
         let field_set = FieldSet::with(fields);
-        let message: Result<Box<dyn Message>, ()> = field_set.try_into();
+        let message: Message = field_set.into();
 
-        match message {
-            Ok(boxed_message) => self.app.on_message(boxed_message),
-            Err(_) => println!("didn't manage to create a message!"),
-        }
+        self.app.on_message(message);
     }
 }
 
@@ -48,23 +45,19 @@ mod tests {
 
     use crate::application::FixApp;
     use crate::cracker::Cracker;
-    use crate::model::message::{Logon, Message};
+    use crate::model::message::Message;
     use crate::model::tag::Tag;
 
     struct TestApp {
-        messages: Vec<Box<dyn Message>>,
+        messages: Vec<Message>,
     }
+
     impl FixApp for TestApp {
         fn as_any(&self) -> &dyn Any {
             self
         }
 
-        fn on_logon(&mut self, message: Logon) {
-            println!("TestApp adding Logon: {:#?}", message.to_string());
-            self.messages.push(Box::new(message));
-        }
-
-        fn on_message(&mut self, message: Box<dyn Message>) {
+        fn on_message(&mut self, message: Message) {
             println!("TestApp adding: {:#?}", message.to_string());
             self.messages.push(message);
         }
@@ -99,7 +92,7 @@ mod tests {
         assert_eq!(
             "A",
             mmssssgggg
-                .header()
+                // .header()
                 .get_field(Tag::MsgType)
                 .ok()
                 .unwrap()
@@ -109,7 +102,6 @@ mod tests {
         assert_eq!(
             "Test",
             mmssssgggg
-                .body()
                 .get_field(Tag::Text)
                 .ok()
                 .unwrap()

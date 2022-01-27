@@ -1,8 +1,9 @@
 use core::fmt;
+use itertools::Itertools;
 use std::borrow::BorrowMut;
-use std::collections::hash_map::Values;
 use std::collections::HashMap;
 use std::fmt::Formatter;
+use std::vec::IntoIter;
 
 use crate::model::tag::Tag;
 
@@ -11,8 +12,9 @@ pub struct FieldSet {
     fields: HashMap<Tag, Field>,
 }
 
+#[derive(Debug)]
 pub struct NoSuchField {
-    tag: Tag,
+    pub(crate) tag: Tag,
 }
 
 impl fmt::Display for NoSuchField {
@@ -41,13 +43,26 @@ impl FieldSet {
         self.fields.get(&tag).ok_or(NoSuchField { tag })
     }
 
+    // todo impl trait
     #[must_use]
-    pub fn iter(&self) -> Values<'_, Tag, Field> {
-        self.fields.values()
+    pub fn iter(&self) -> IntoIter<&Field> {
+        self.fields
+            .iter()
+            .map(|s| s.1)
+            .sorted_by_key(|k| k.tag().num())
+    }
+
+    // todo impl trait
+    #[must_use]
+    pub fn into_iter(self) -> IntoIter<Field> {
+        self.fields
+            .iter()
+            .map(|s| s.1.clone())
+            .sorted_by_key(|k| k.tag().num())
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq)]
 pub enum Field {
     Int(Tag, i32),
     TagNum(Tag, u128), // todo check
@@ -55,6 +70,15 @@ pub enum Field {
 
     String(Tag, String),
     Char(Tag, char),
+}
+
+impl Field {
+    pub(crate) fn is_header_field(&self) -> bool {
+        match self.tag() {
+            Tag::MsgType => true,
+            Tag::Text | Tag::ClOrdId => false,
+        }
+    }
 }
 
 impl TryFrom<String> for Field {
