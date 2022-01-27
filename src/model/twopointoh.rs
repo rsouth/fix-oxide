@@ -1,91 +1,63 @@
-use crate::model::field::{Field, FieldSet, NoSuchField};
-use crate::model::tag::Tag;
-use itertools::Itertools;
-use std::collections::HashMap;
 use std::fmt::Formatter;
-use std::path::Display;
-use std::str::FromStr;
 
-// #[derive(Debug, Clone, PartialOrd, PartialEq)]
-// pub enum Field {
-//     String(Tag, String),
-//     Char(Tag, char),
-//     Price(Tag, f32),
-//     Int(Tag, i32),
-//     Amt(Tag, i32),
-//     Qty(Tag, i32),
-//     Currency(Tag, String),
-// }
+use itertools::Itertools;
 
-// impl Field {
-//     fn get_val(&self, val: &mut MsgType) {}
-// }
-
-// impl TryFrom<Field> for String {
-//     type Error = InvalidConversion;
-//
-//     fn try_from(value: Field) -> Result<Self, Self::Error> {
-//         match value {
-//             Field::String(_, x) | Field::Currency(_, x) => Ok(x),
-//             _ => Err(InvalidConversion {}),
-//         }
-//     }
-// }
-
-// impl TryFrom<Field> for i32 {
-//     type Error = InvalidConversion;
-//
-//     fn try_from(value: Field) -> Result<Self, Self::Error> {
-//         match value {
-//             Field::Int(_, x) | Field::Amt(_, x) | Field::Qty(_, x) => Ok(x),
-//             _ => Err(InvalidConversion {}),
-//         }
-//     }
-// }
+use crate::model::field::{Field, FieldSet};
+use crate::model::tag::Tag;
 
 impl FieldSet {
-    fn get_msg_type(&self) -> Result<StringField, NoSuchField> {
+    fn get_msg_type(&self) -> Result<StringField, UnknownField> {
         let f = self
             .iter()
             .find_or_first(|p| p.tag() == Tag::MsgType)
             .unwrap();
         match f {
-            Field::String(t, v) => Ok(StringField {
-                tag: Tag::MsgType.num(),
+            Field::String(t, _) => Ok(StringField {
+                tag: t.num(),
                 fd: f.clone(),
             }),
-            _ => Err(NoSuchField { tag: Tag::MsgType }),
+            _ => Err(UnknownField {}),
         }
     }
 
-    fn get_string_field(&self, tag: u16) -> Result<StringField, NoSuchField> {
+    fn get_string_field(&self, tag: u16) -> Result<StringField, UnknownField> {
         let f = self.iter().find_or_first(|p| p.tag().num() == tag).unwrap();
         match f {
             Field::String(t, v) => Ok(StringField {
                 tag: t.num(),
-                fd: Field::String(t.clone(), v.to_string()),
+                fd: Field::String(*t, v.to_string()),
             }),
-            _ => Err(NoSuchField { tag: Tag::MsgType }),
+            _ => Err(UnknownField {}),
         }
     }
 }
 
-impl TryFrom<Field> for MsgType {
-    type Error = InvalidConversion;
-
-    fn try_from(value: Field) -> Result<Self, Self::Error> {
-        match value {
-            Field::String(tag, value) => Ok(MsgType {
-                fd: Field::String(tag, value),
-            }),
-            _ => Err(InvalidConversion {}),
-        }
-    }
-}
+// --- Example of a concrete / standard field
 
 pub struct MsgType {
     fd: Field,
 }
+
+impl MsgType {
+    const fn tag() -> u16 {
+        35
+    }
+
+    fn value(&self) -> &str {
+        match &self.fd {
+            Field::String(_, v) => v,
+            _ => "",
+        }
+    }
+}
+
+impl std::fmt::Display for MsgType {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+
+// ----- Example of a custom field
 
 pub struct StringField {
     tag: u16,
@@ -93,8 +65,8 @@ pub struct StringField {
 }
 
 impl StringField {
-    fn tag(&self) -> u16 {
-        self.tag.into()
+    const fn tag(&self) -> u16 {
+        self.tag
     }
 
     fn value(&self) -> &str {
@@ -111,30 +83,23 @@ impl std::fmt::Display for StringField {
     }
 }
 
-impl MsgType {
-    fn tag(&self) -> u16 {
-        35
-    }
+// ----- Errors...
 
-    fn value(&self) -> &str {
-        match &self.fd {
-            Field::String(t, v) => v,
-            _ => "",
-        }
-    }
-}
-
-impl std::fmt::Display for MsgType {
+// unable to convert from i32 to FieldType
+pub struct UnknownField;
+impl std::fmt::Display for UnknownField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}={}|", self.tag(), self.value())
+        write!(f, "error message here")
     }
 }
+
+// ----- test / usage
 
 #[cfg(test)]
 mod tests {
     use crate::model::field::FieldSet;
     use crate::model::tag::Tag;
-    use crate::model::twopointoh::{Field, MsgType};
+    use crate::model::twopointoh::Field;
 
     #[test]
     fn it_works() {
@@ -145,65 +110,5 @@ mod tests {
         let expected = "35=D|";
         assert_eq!(expected, fs.get_msg_type().ok().unwrap().to_string());
         assert_eq!(expected, fs.get_string_field(35).ok().unwrap().to_string());
-    }
-}
-
-// couldn't convert 35=D| to Field
-pub struct InvalidConversion;
-impl std::fmt::Display for InvalidConversion {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "")
-    }
-}
-
-// unable to convert from i32 to FieldType
-pub struct UnknownField;
-impl std::fmt::Display for UnknownField {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "")
-    }
-}
-
-#[derive(Debug, Clone, PartialOrd, PartialEq)]
-enum FieldType {
-    String,
-    Int,
-}
-
-struct Dict {
-    data: HashMap<i32, FieldType>,
-}
-impl Dict {
-    // load data from XML into here
-    fn init(/* xml file / data */) -> Dict {
-        let mut m = HashMap::<i32, FieldType>::new();
-        m.insert(60000, FieldType::String);
-
-        Dict { data: m }
-    }
-}
-
-impl TryFrom<i32> for FieldType {
-    type Error = InvalidConversion;
-
-    // from 35 to String
-    fn try_from(fix_field_tag: i32) -> Result<Self, Self::Error> {
-        match fix_field_tag {
-            1 => Ok(FieldType::String),
-            2 => Ok(FieldType::Int),
-            _ => Err(InvalidConversion),
-        }
-    }
-}
-
-impl FromStr for Field {
-    type Err = InvalidConversion;
-
-    // from 35=D| to Field(Tag::MsgType, "D".to_string())
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "123" => Ok(Field::String(Tag::MsgType, s.to_string())),
-            _ => Err(InvalidConversion {}),
-        }
     }
 }
