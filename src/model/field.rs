@@ -1,11 +1,12 @@
-use crate::model;
 use core::fmt;
-use itertools::Itertools;
 use std::borrow::BorrowMut;
 use std::collections::HashMap;
 use std::fmt::Formatter;
 use std::vec::IntoIter;
 
+use itertools::Itertools;
+
+use crate::model;
 use crate::model::twopointoh::Field;
 
 #[derive(Default, Debug, Clone)]

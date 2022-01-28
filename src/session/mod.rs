@@ -5,6 +5,7 @@ pub struct SessionID {
     sender_comp_id: String,
     target_comp_id: String,
 }
+
 impl SessionID {
     #[must_use]
     pub fn from_settings(settings: &Settings) -> Self {

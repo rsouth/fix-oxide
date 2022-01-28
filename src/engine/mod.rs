@@ -66,8 +66,11 @@ impl Engine {
 // state machine; state transitions here based on events.
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum State {
-    Created,   // session has been created but not yet initialised
-    Downtime,  // session has been initialised, but scheduled downtime is in effect
-    LoggedIn,  // session has been initialised, and is logged in
+    Created,
+    // session has been created but not yet initialised
+    Downtime,
+    // session has been initialised, but scheduled downtime is in effect
+    LoggedIn,
+    // session has been initialised, and is logged in
     LoggedOut, // session has been initialised, but is not logged in (failed? disconnected? etc)
 }

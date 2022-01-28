@@ -81,6 +81,7 @@ impl std::fmt::Display for StringField {
 
 // unable to convert from i32 to FieldType
 pub struct UnknownField;
+
 impl std::fmt::Display for UnknownField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "error message here")
@@ -92,7 +93,8 @@ impl std::fmt::Display for UnknownField {
 #[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq)]
 pub enum Field {
     Int(u16, i32),
-    TagNum(u16, u128), // todo check
+    TagNum(u16, u128),
+    // todo check
     SeqNum(u16, u128),
     String(u16, String),
     Char(u16, char),
