@@ -1,9 +1,9 @@
 use bytes::Bytes;
 
 use crate::application::FixApp;
-use crate::model::field::{Field, FieldSet};
+use crate::model::field::FieldSet;
 use crate::model::message::Message;
-use crate::model::tag::Tag;
+use crate::model::twopointoh::Field;
 
 struct Cracker<'a> {
     app: Box<dyn FixApp + 'a>,
@@ -31,12 +31,6 @@ impl Cracker<'_> {
     }
 }
 
-impl From<&[u8]> for Field {
-    fn from(_data: &[u8]) -> Self {
-        Field::String(Tag::Text, "wer".to_string())
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use std::any::Any;
@@ -46,7 +40,7 @@ mod tests {
     use crate::application::FixApp;
     use crate::cracker::Cracker;
     use crate::model::message::Message;
-    use crate::model::tag::Tag;
+    use crate::model::twopointoh::MsgType;
 
     struct TestApp {
         messages: Vec<Message>,
@@ -93,7 +87,7 @@ mod tests {
             "A",
             mmssssgggg
                 // .header()
-                .get_field(Tag::MsgType)
+                .get_field(MsgType::tag())
                 .ok()
                 .unwrap()
                 .string_value()
@@ -102,7 +96,7 @@ mod tests {
         assert_eq!(
             "Test",
             mmssssgggg
-                .get_field(Tag::Text)
+                .get_field(58)
                 .ok()
                 .unwrap()
                 .string_value()

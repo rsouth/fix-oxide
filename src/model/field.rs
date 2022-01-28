@@ -1,3 +1,4 @@
+use crate::model;
 use core::fmt;
 use itertools::Itertools;
 use std::borrow::BorrowMut;
@@ -5,16 +6,16 @@ use std::collections::HashMap;
 use std::fmt::Formatter;
 use std::vec::IntoIter;
 
-use crate::model::tag::Tag;
+use crate::model::twopointoh::Field;
 
 #[derive(Default, Debug, Clone)]
 pub struct FieldSet {
-    fields: HashMap<Tag, Field>,
+    fields: HashMap<u16, Field>,
 }
 
 #[derive(Debug)]
 pub struct NoSuchField {
-    pub(crate) tag: Tag,
+    pub(crate) tag: u16,
 }
 
 impl fmt::Display for NoSuchField {
@@ -25,8 +26,8 @@ impl fmt::Display for NoSuchField {
 
 impl FieldSet {
     #[must_use]
-    pub fn with(fields: Vec<Field>) -> FieldSet {
-        FieldSet {
+    pub fn with(fields: Vec<Field>) -> Self {
+        Self {
             fields: fields.into_iter().map(|k| (k.tag(), k)).collect(),
         }
     }
@@ -39,17 +40,14 @@ impl FieldSet {
     /// # Errors
     ///
     /// Will return `Err` if a field for `tag` is not present in the `FieldSet`
-    pub fn get_field(&self, tag: Tag) -> Result<&Field, NoSuchField> {
+    pub fn get_field(&self, tag: u16) -> Result<&Field, NoSuchField> {
         self.fields.get(&tag).ok_or(NoSuchField { tag })
     }
 
     // todo impl trait
     #[must_use]
     pub fn iter(&self) -> IntoIter<&Field> {
-        self.fields
-            .iter()
-            .map(|s| s.1)
-            .sorted_by_key(|k| k.tag().num())
+        self.fields.iter().map(|s| s.1).sorted_by_key(|k| k.tag())
     }
 
     // todo impl trait
@@ -58,32 +56,19 @@ impl FieldSet {
         self.fields
             .iter()
             .map(|s| s.1.clone())
-            .sorted_by_key(|k| k.tag().num())
+            .sorted_by_key(model::twopointoh::Field::tag)
     }
 }
 
-#[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq)]
-pub enum Field {
-    Int(Tag, i32),
-    TagNum(Tag, u128), // todo check
-    SeqNum(Tag, u128),
-
-    String(Tag, String),
-    Char(Tag, char),
-}
-
 impl Field {
+    // todo NEED THIS but should pull from config
     pub(crate) fn is_header_field(&self) -> bool {
-        match self.tag() {
-            Tag::MsgType => true,
-            Tag::Text | Tag::ClOrdId => false,
-        }
+        matches!(self.tag(), 8 | 35)
     }
 }
 
 impl TryFrom<String> for Field {
     type Error = ();
-
     fn try_from(s: String) -> Result<Self, Self::Error> {
         println!("From<String> for Field: {}", &s);
         let two_parts = s.split_once('=');
@@ -93,16 +78,14 @@ impl TryFrom<String> for Field {
                 println!("parsing tag: {}, field: {} into Field", s_tag, s_value);
 
                 // figure out the tag
-                let tag_num: u16 = s_tag.parse::<u16>().unwrap();
-                let tag = Tag::from(tag_num);
+                let tag: u16 = s_tag.parse::<u16>().unwrap();
 
                 // build field using the tag & value
-                let field = match tag {
-                    Tag::MsgType | Tag::Text | Tag::ClOrdId => {
-                        Field::String(tag, s_value.to_string())
-                    }
-                };
-                Ok(field)
+                match tag {
+                    // todo generate this
+                    35 => Ok(Self::String(tag, s_value.to_string())),
+                    _ => Err(()),
+                }
             }
         }
     }
@@ -125,8 +108,14 @@ impl Field {
         }
     }
 
-    pub(crate) fn tag(&self) -> Tag {
+    pub(crate) fn tag(&self) -> u16 {
         self.into()
+    }
+}
+
+impl From<&Field> for u16 {
+    fn from(field: &Field) -> Self {
+        field.tag()
     }
 }
 
@@ -142,22 +131,21 @@ impl Field {
     pub fn to_delimited_string(&self, separator: char) -> String {
         match self {
             // &char
-            Field::Char(t, v) => format!("{}={}{}", t.num(), v, separator),
+            Field::Char(t, v) => format!("{}={}{}", t, v, separator),
             // &i32
-            Field::Int(t, v) => format!("{}={}{}", t.num(), v, separator),
+            Field::Int(t, v) => format!("{}={}{}", t, v, separator),
             // &String
-            Field::String(t, v) => format!("{}={}{}", t.num(), v, separator),
+            Field::String(t, v) => format!("{}={}{}", t, v, separator),
             // &u128
             Field::TagNum(t, v) | Field::SeqNum(t, v) => {
-                format!("{}={}{}", t.num(), v, separator)
+                format!("{}={}{}", t, v, separator)
             }
         }
-        .to_string()
     }
 
     #[must_use]
     pub fn to_bytes(&self) -> Box<[u8]> {
         // let separator = '\x01';
-        Box::from(self.to_string().as_bytes().clone())
+        Box::from(self.to_string().as_bytes())
     }
 }

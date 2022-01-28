@@ -1,25 +1,23 @@
 pub mod field;
 pub mod message;
-mod message_type;
-pub mod tag;
-mod twopointoh;
+pub mod message_type;
+pub mod twopointoh;
 
 #[cfg(test)]
 mod tests {
     use std::ops::AddAssign;
 
-    use crate::model::field::{Field, FieldSet};
+    use crate::model::field::FieldSet;
     use crate::model::message::Message;
-    use crate::model::message_type::MsgType;
-    use crate::model::tag::Tag;
+    use crate::model::twopointoh::{Field, MsgType};
 
     #[test]
     fn basic_fieldset_tests() {
         let mut fields = FieldSet::default();
-        fields.set_field(Field::String(Tag::Text, "Test".to_string()));
+        fields.set_field(Field::String(58, "Test".to_string()));
 
-        let text = fields.get_field(Tag::Text).ok().unwrap();
-        assert_eq!(text.tag(), Tag::Text);
+        let text = fields.get_field(58).ok().unwrap();
+        assert_eq!(text.tag(), 58);
         assert_eq!(text.string_value().unwrap(), "Test");
 
         // only added 1 tag
@@ -33,9 +31,12 @@ mod tests {
 
     #[test]
     fn basic_logout_message_test() {
-        let msg = Message::of_type(MsgType::Logon);
+        let msg = Message::of_type("A");
 
-        assert_eq!(MsgType::Logon, msg.msg_type().ok().unwrap());
+        let msg_type = MsgType {
+            fd: Field::String(35, "A".to_string()),
+        };
+        assert_eq!(msg_type, msg.msg_type().unwrap());
         // assert_eq!(1, msg.header().iter().count());
     }
 }
