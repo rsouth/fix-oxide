@@ -13,7 +13,6 @@ struct Cracker<'a> {
 impl Cracker<'_> {
     pub fn crack(&mut self, msg: Bytes) {
         let msg_string = String::from_utf8_lossy(msg.as_ref()).to_string();
-
         let fields: Vec<Field> = msg_string
             .split('\x01')
             .into_iter()

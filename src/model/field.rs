@@ -6,7 +6,6 @@ use std::vec::IntoIter;
 
 use itertools::Itertools;
 
-use crate::model;
 use crate::model::twopointoh::Field;
 
 #[derive(Default, Debug, Clone)]
@@ -57,14 +56,14 @@ impl FieldSet {
         self.fields
             .iter()
             .map(|s| s.1.clone())
-            .sorted_by_key(model::twopointoh::Field::tag)
+            .sorted_by_key(|k| k.tag())
     }
 }
 
 impl Field {
     // todo NEED THIS but should pull from config
     #[must_use]
-    pub fn is_header_field(&self) -> bool {
+    pub const fn is_header_field(&self) -> bool {
         matches!(self.tag(), 8 | 35)
     }
 }
@@ -85,7 +84,7 @@ impl TryFrom<String> for Field {
                 // build field using the tag & value
                 match tag {
                     // todo generate this
-                    35 => Ok(Self::String(tag, s_value.to_string())),
+                    58 | 35 => Ok(Self::String(tag, s_value.to_string())),
                     _ => Err(()),
                 }
             }
@@ -110,14 +109,15 @@ impl Field {
         }
     }
 
-    pub fn tag(&self) -> u16 {
-        self.into()
-    }
-}
-
-impl From<&Field> for u16 {
-    fn from(field: &Field) -> Self {
-        field.tag()
+    #[must_use]
+    pub const fn tag(&self) -> u16 {
+        match self {
+            Field::Int(t, _)
+            | Field::TagNum(t, _)
+            | Field::SeqNum(t, _)
+            | Field::String(t, _)
+            | Field::Char(t, _) => *t,
+        }
     }
 }
 
