@@ -28,7 +28,7 @@ impl FieldSet {
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct MsgType {
-    pub(crate) fd: Field,
+    pub fd: Field,
 }
 
 impl MsgType {

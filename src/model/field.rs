@@ -15,7 +15,7 @@ pub struct FieldSet {
 
 #[derive(Debug)]
 pub struct NoSuchField {
-    pub(crate) tag: u16,
+    pub tag: u16,
 }
 
 impl fmt::Display for NoSuchField {
@@ -62,7 +62,7 @@ impl FieldSet {
 
 impl Field {
     // todo NEED THIS but should pull from config
-    pub(crate) fn is_header_field(&self) -> bool {
+    pub fn is_header_field(&self) -> bool {
         matches!(self.tag(), 8 | 35)
     }
 }
@@ -101,14 +101,14 @@ impl fmt::Display for FieldTypeMismatchError {
 }
 
 impl Field {
-    pub(crate) fn string_value(&self) -> Result<&str, FieldTypeMismatchError> {
+    pub fn string_value(&self) -> Result<&str, FieldTypeMismatchError> {
         match self {
             Field::String(_, v) => Ok(v),
             _ => Err(FieldTypeMismatchError {}),
         }
     }
 
-    pub(crate) fn tag(&self) -> u16 {
+    pub fn tag(&self) -> u16 {
         self.into()
     }
 }

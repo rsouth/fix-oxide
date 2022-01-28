@@ -5,7 +5,7 @@ use crate::model::twopointoh::MsgType;
 
 #[derive(Debug, Clone)]
 pub struct UnknownMsgTypeError {
-    pub(crate) val: String,
+    pub val: String,
 }
 
 impl fmt::Display for UnknownMsgTypeError {

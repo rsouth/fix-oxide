@@ -11,7 +11,7 @@ struct Cracker<'a> {
 
 // todo link to FixApplication...
 impl Cracker<'_> {
-    pub(crate) fn crack(&mut self, msg: Bytes) {
+    pub fn crack(&mut self, msg: Bytes) {
         let msg_string = String::from_utf8_lossy(msg.as_ref()).to_string();
 
         let fields: Vec<Field> = msg_string
