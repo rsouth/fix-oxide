@@ -8,20 +8,13 @@ use itertools::Itertools;
 
 use crate::model::twopointoh::Field;
 
+// todo thinking, nothing here should be generated; those impls in a different file
+
+// --- FieldSet -----------
+
 #[derive(Default, Debug, Clone)]
 pub struct FieldSet {
     fields: HashMap<u16, Field>,
-}
-
-#[derive(Debug)]
-pub struct NoSuchField {
-    pub tag: u16,
-}
-
-impl fmt::Display for NoSuchField {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Field {} not found in message", self.tag)
-    }
 }
 
 impl FieldSet {
@@ -60,64 +53,21 @@ impl FieldSet {
     }
 }
 
+/// --- Field impls which _do not_ need to be generated
+
 impl Field {
     // todo NEED THIS but should pull from config
     #[must_use]
     pub const fn is_header_field(&self) -> bool {
         matches!(self.tag(), 8 | 35)
     }
-}
 
-impl TryFrom<String> for Field {
-    type Error = ();
-    fn try_from(s: String) -> Result<Self, Self::Error> {
-        println!("From<String> for Field: {}", &s);
-        let two_parts = s.split_once('=');
-        match two_parts {
-            None => Err(()),
-            Some((s_tag, s_value)) => {
-                println!("parsing tag: {}, field: {} into Field", s_tag, s_value);
-
-                // figure out the tag
-                let tag: u16 = s_tag.parse::<u16>().unwrap();
-
-                // build field using the tag & value
-                match tag {
-                    // todo generate this
-                    58 | 35 => Ok(Self::String(tag, s_value.to_string())),
-                    _ => Err(()),
-                }
-            }
-        }
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct FieldTypeMismatchError;
-
-impl fmt::Display for FieldTypeMismatchError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Type mismatch")
-    }
-}
-
-impl Field {
-    pub fn string_value(&self) -> Result<&str, FieldTypeMismatchError> {
-        match self {
-            Field::String(_, v) => Ok(v),
-            _ => Err(FieldTypeMismatchError {}),
-        }
-    }
+    // todo do we need is_body and is_trailer also?
 
     #[must_use]
-    pub const fn tag(&self) -> u16 {
-        match self {
-            Field::Int(t, _)
-            | Field::TagNum(t, _)
-            | Field::SeqNum(t, _)
-            | Field::String(t, _)
-            | Field::Char(t, _) => *t,
-        }
+    pub fn to_bytes(&self) -> Box<[u8]> {
+        // let separator = '\x01';
+        Box::from(self.to_string().as_bytes())
     }
 }
 
@@ -128,26 +78,23 @@ impl fmt::Display for Field {
     }
 }
 
-impl Field {
-    #[must_use]
-    pub fn to_delimited_string(&self, separator: char) -> String {
-        match self {
-            // &char
-            Field::Char(t, v) => format!("{}={}{}", t, v, separator),
-            // &i32
-            Field::Int(t, v) => format!("{}={}{}", t, v, separator),
-            // &String
-            Field::String(t, v) => format!("{}={}{}", t, v, separator),
-            // &u128
-            Field::TagNum(t, v) | Field::SeqNum(t, v) => {
-                format!("{}={}{}", t, v, separator)
-            }
-        }
-    }
+// --- Errors.....
 
-    #[must_use]
-    pub fn to_bytes(&self) -> Box<[u8]> {
-        // let separator = '\x01';
-        Box::from(self.to_string().as_bytes())
+/// Field was not found on the Message
+#[derive(Debug)]
+pub struct NoSuchField {
+    pub tag: u16,
+}
+impl fmt::Display for NoSuchField {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Field {} not found in message", self.tag)
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct FieldTypeMismatchError;
+impl fmt::Display for FieldTypeMismatchError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Type mismatch")
     }
 }

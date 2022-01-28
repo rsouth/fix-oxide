@@ -1,4 +1,6 @@
-import threading
+
+# https://simplabs.com/blog/2020/12/31/xml-and-rust/
+
 import xml.etree.ElementTree as ET
 root = ET.parse('FIX42.xml').getroot()
 

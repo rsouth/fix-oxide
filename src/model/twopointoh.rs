@@ -2,8 +2,84 @@ use std::fmt::Formatter;
 
 use itertools::Itertools;
 
-use crate::model::field::FieldSet;
+use crate::model::field::{FieldSet, FieldTypeMismatchError};
 
+// ------- Field Types ???
+
+#[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq)]
+pub enum Field {
+    Int(u16, i32),
+    TagNum(u16, u128),
+    // todo check
+    SeqNum(u16, u128),
+    String(u16, String),
+    Char(u16, char),
+}
+
+impl TryFrom<String> for Field {
+    type Error = (); // todo error type...
+
+    fn try_from(s: String) -> Result<Self, Self::Error> {
+        println!("From<String> for Field: {}", &s);
+        let two_parts = s.split_once('=');
+        match two_parts {
+            None => Err(()),
+            Some((s_tag, s_value)) => {
+                println!("parsing tag: {}, field: {} into Field", s_tag, s_value);
+
+                // figure out the tag
+                let tag: u16 = s_tag.parse::<u16>().unwrap();
+
+                // build field using the tag & value
+                match tag {
+                    // todo generate this
+                    58 | 35 => Ok(Self::String(tag, s_value.to_string())),
+                    _ => Err(()),
+                }
+            }
+        }
+    }
+}
+
+impl Field {
+    pub fn string_value(&self) -> Result<&str, FieldTypeMismatchError> {
+        match self {
+            Field::String(_, v) => Ok(v),
+            _ => Err(FieldTypeMismatchError {}),
+        }
+    }
+
+    #[must_use]
+    pub const fn tag(&self) -> u16 {
+        match self {
+            Field::Int(t, _)
+            | Field::TagNum(t, _)
+            | Field::SeqNum(t, _)
+            | Field::String(t, _)
+            | Field::Char(t, _) => *t,
+        }
+    }
+
+    #[must_use]
+    pub fn to_delimited_string(&self, separator: char) -> String {
+        match self {
+            // &char
+            Field::Char(t, v) => format!("{}={}{}", t, v, separator),
+            // &i32
+            Field::Int(t, v) => format!("{}={}{}", t, v, separator),
+            // &String
+            Field::String(t, v) => format!("{}={}{}", t, v, separator),
+            // &u128
+            Field::TagNum(t, v) | Field::SeqNum(t, v) => {
+                format!("{}={}{}", t, v, separator)
+            }
+        }
+    }
+}
+
+// ------ FieldSet
+
+// todo this whole jobbo will be generated
 impl FieldSet {
     fn get_msg_type(&self) -> Result<MsgType, UnknownField> {
         self.iter()
@@ -12,19 +88,25 @@ impl FieldSet {
             .ok_or(UnknownField {})
     }
 
-    fn get_string_field(&self, tag: u16) -> Result<StringField, UnknownField> {
+    // todo generate get_clordid(&self) etc
+
+    // todo generate get_int(&self, tag: u16) etc.
+
+    /// for use by custom fields
+    fn get_string_field(&self, tag: u16) -> Result<StringField, FieldTypeMismatchError> {
         let f = self.iter().find_or_first(|p| p.tag() == tag).unwrap();
         match f {
             Field::String(t, v) => Ok(StringField {
                 tag: *t,
                 fd: Field::String(*t, v.to_string()),
             }),
-            _ => Err(UnknownField {}),
+            _ => Err(FieldTypeMismatchError {}),
         }
     }
 }
 
 // --- Example of a concrete / standard field
+// todo all types should be generated
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct MsgType {
@@ -52,6 +134,7 @@ impl std::fmt::Display for MsgType {
 }
 
 // ----- Example of a custom field
+// todo should be generated for all field types
 
 pub struct StringField {
     tag: u16,
@@ -79,25 +162,13 @@ impl std::fmt::Display for StringField {
 
 // ----- Errors...
 
-// unable to convert from i32 to FieldType
+/// unable to convert from i32 to FieldType
 pub struct UnknownField;
 
 impl std::fmt::Display for UnknownField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "error message here")
     }
-}
-
-// ------- Field Types ???
-
-#[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq)]
-pub enum Field {
-    Int(u16, i32),
-    TagNum(u16, u128),
-    // todo check
-    SeqNum(u16, u128),
-    String(u16, String),
-    Char(u16, char),
 }
 
 // ----- test / usage
