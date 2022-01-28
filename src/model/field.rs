@@ -62,6 +62,7 @@ impl FieldSet {
 
 impl Field {
     // todo NEED THIS but should pull from config
+    #[must_use]
     pub fn is_header_field(&self) -> bool {
         matches!(self.tag(), 8 | 35)
     }
