@@ -4,7 +4,7 @@ use std::str::FromStr;
 use itertools::Itertools;
 use rust_decimal::Decimal;
 
-use crate::model::field::{FieldSet, FieldTypeMismatchError};
+use crate::model::field::{FieldSet, FieldTypeMismatchError, MsgCat};
 
 // ------- Field Types ???
 
@@ -129,13 +129,6 @@ impl TryFrom<String> for Field {
 
 // todo this whole jobbo will be generated
 impl FieldSet {
-    // fn get_msg_type(&self) -> Result<MsgType, UnknownField> {
-    //     self.iter()
-    //         .find_or_first(|p| p.tag() == MsgType::tag())
-    //         .map(|i| MsgType { fd: i.clone() })
-    //         .ok_or(UnknownField {})
-    // }
-
     // todo generate get_clordid(&self) etc
 
     // todo generate get_int(&self, tag: u16) etc.
@@ -157,11 +150,11 @@ impl FieldSet {
 // todo all types should be generated
 
 #[derive(Debug, Clone, Eq, PartialEq)]
-pub struct MsgType {
+pub struct MsgTypeField {
     pub fd: Field,
 }
 
-impl MsgType {
+impl MsgTypeField {
     #[must_use]
     pub const fn tag() -> u16 {
         35
@@ -175,7 +168,7 @@ impl MsgType {
     }
 }
 
-impl std::fmt::Display for MsgType {
+impl std::fmt::Display for MsgTypeField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
@@ -214,11 +207,11 @@ impl std::fmt::Display for StringField {
 mod tests {
     use crate::model::field::FieldSet;
     use crate::model::message::Message;
-    use crate::model::twopointoh::{Field, MsgType};
+    use crate::model::twopointoh::{Field, MsgTypeField};
 
     #[test]
     fn it_works() {
-        let f = Field::String(MsgType::tag(), "D".to_string());
+        let f = Field::String(MsgTypeField::tag(), "D".to_string());
         let mut fs = FieldSet::default();
         fs.set_field(f.clone());
 

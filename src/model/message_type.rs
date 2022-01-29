@@ -1,7 +1,7 @@
 use std::fmt;
 
 use crate::model::field::FieldSet;
-use crate::model::twopointoh::MsgType;
+use crate::model::twopointoh::MsgTypeField;
 
 #[derive(Debug, Clone)]
 pub struct UnknownMsgTypeError {
@@ -14,7 +14,7 @@ impl fmt::Display for UnknownMsgTypeError {
     }
 }
 
-impl TryFrom<&FieldSet> for MsgType {
+impl TryFrom<&FieldSet> for MsgTypeField {
     type Error = ();
 
     fn try_from(fs: &FieldSet) -> Result<Self, Self::Error> {

@@ -2,14 +2,33 @@ use core::fmt;
 use std::borrow::BorrowMut;
 use std::collections::HashMap;
 use std::fmt::Formatter;
+use std::str::FromStr;
 use std::vec::IntoIter;
 
 use crate::model;
 use itertools::Itertools;
 
-use crate::model::twopointoh::{Field, MsgType};
+use crate::model::twopointoh::{Field, MsgTypeField};
 
 // todo thinking, nothing here should be generated; those impls in a different file
+
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub enum MsgCat {
+    Admin,
+    App,
+}
+
+impl FromStr for MsgCat {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "admin" => Ok(MsgCat::Admin),
+            "app" => Ok(MsgCat::App),
+            _ => Err(()),
+        }
+    }
+}
 
 // --- FieldSet -----------
 
@@ -22,10 +41,10 @@ impl FieldSet {
     ///
     /// # Errors
     ///
-    pub fn get_msg_type(&self) -> Result<MsgType, UnknownField> {
+    pub fn get_msg_type(&self) -> Result<MsgTypeField, UnknownField> {
         self.iter()
-            .find_or_first(|p| p.tag() == MsgType::tag())
-            .map(|i| MsgType { fd: i.clone() })
+            .find_or_first(|p| p.tag() == MsgTypeField::tag())
+            .map(|i| MsgTypeField { fd: i.clone() })
             .ok_or(UnknownField {})
     }
 

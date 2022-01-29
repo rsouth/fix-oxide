@@ -3,7 +3,7 @@ use std::fmt::Formatter;
 
 use crate::model::field::{FieldSet, NoSuchField};
 use crate::model::message_type::UnknownMsgTypeError;
-use crate::model::twopointoh::{Field, MsgType};
+use crate::model::twopointoh::{Field, MsgTypeField};
 
 #[derive(Default, Debug)]
 pub struct Message {
@@ -12,7 +12,7 @@ pub struct Message {
     trailer: FieldSet,
 }
 
-impl TryFrom<&Field> for MsgType {
+impl TryFrom<&Field> for MsgTypeField {
     type Error = UnknownMsgTypeError;
 
     fn try_from(value: &Field) -> Result<Self, Self::Error> {
@@ -38,7 +38,7 @@ impl Message {
         T: Into<String>,
     {
         Self {
-            header: FieldSet::with(vec![Field::String(MsgType::tag(), msg_type.into())]),
+            header: FieldSet::with(vec![Field::String(MsgTypeField::tag(), msg_type.into())]),
             body: FieldSet::default(),
             trailer: FieldSet::default(),
         }
@@ -47,8 +47,8 @@ impl Message {
     ///
     /// # Errors
     ///
-    pub fn msg_type(&self) -> Result<MsgType, UnknownMsgTypeError> {
-        match self.header.get_field(MsgType::tag()) {
+    pub fn msg_type(&self) -> Result<MsgTypeField, UnknownMsgTypeError> {
+        match self.header.get_field(MsgTypeField::tag()) {
             Ok(o) => o.try_into(),
             Err(e) => Err(e.into()),
         }

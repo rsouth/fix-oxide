@@ -45,7 +45,7 @@ return_types = {
 }
 
 exclude_types = [
-    'MULTIPLEVALUESTRING'
+    'MULTIPLEVALUESTRING', 'DATA'
 ]
 
 seen_types = []
@@ -196,11 +196,76 @@ print(f"}}")
 
 
 
+##
+## Generate Field Types
+##
+
+print()
+enum_type_return_type = {}
+for tag_type in root.findall('fields/field'):
+    tag_num  = tag_type.get('number')
+    tag_name = tag_type.get('name')
+    tag_type = tag_type.get('type')
+    if tag_type not in exclude_types and tag_type in enum_variants:
+        print(f"#[derive(Debug, Clone, Eq, PartialEq)]")
+        print(f"pub struct {tag_name}Field {{")
+        print(f"    pub fd: Field,")
+        print(f"}}")
+        print()
+
+        print(f"impl {tag_name} {{")
+        print(f"    #[must_use]")
+        print(f"    pub const fn tag() -> u16 {{")
+        print(f"        {tag_num}")
+        print(f"    }}")
+        print()
+
+        print(f"    // tag_type: {tag_type}")
+        print(f"    fn value(&self) -> {return_types.get(tag_type)} {{")
+        print(f"        match &self.fd {{")
+        print(f"            Field::{enum_variants.get(tag_type)}(_, v) => v,")
+        print(f"            _ => "",")
+        print(f"        }}")
+        print(f"    }}")
+        print(f"}}")
+
+        print()
+        print(f"impl std::fmt::Display for {tag_name}Field {{")
+        print(f"    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {{")
+        print(f"        write!(f, \"{{}}={{}}|\", Self::tag(), self.value())")
+        print(f"    }}")
+        print(f"}}")
+        enum_type_return_type[enum_variants.get(tag_type)] = return_types.get(tag_type)
 
 
-
-
-
+# todo impl generic (custom) field types (string, int etc)
+seen_types.clear()
+for field_type in enum_variants.values():
+    if field_type not in seen_types:
+        print(f"pub struct {field_type}Field {{")
+        print(f"    tag: u16,")
+        print(f"    fd: Field,")
+        print(f"}}")
+        print()
+        print(f"impl {field_type}Field {{")
+        print(f"    const fn tag(&self) -> u16 {{")
+        print(f"        self.tag")
+        print(f"    }}")
+        print()
+        print(f"    fn value(&self) -> {enum_type_return_type.get(field_type)} {{")
+        print(f"        match &self.fd {{")
+        print(f"            Field::{field_type}(_, v) => v,")
+        print(f"            _ => panic!(""),")
+        print(f"        }}")
+        print(f"    }}")
+        print(f"}}")
+        print()
+        print(f"impl std::fmt::Display for {field_type}Field {{")
+        print(f"    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {{")
+        print(f"        write!(f, \"{{}}={{}}|\", self.tag(), self.value())")
+        print(f"    }}")
+        print(f"}}")
+        seen_types.append(field_type)
 
 
 

@@ -9,7 +9,7 @@ mod tests {
 
     use crate::model::field::FieldSet;
     use crate::model::message::Message;
-    use crate::model::twopointoh::{Field, MsgType};
+    use crate::model::twopointoh::{Field, MsgTypeField};
 
     #[test]
     fn basic_fieldset_tests() {
@@ -33,7 +33,7 @@ mod tests {
     fn basic_logout_message_test() {
         let msg = Message::of_type("A");
 
-        let msg_type = MsgType {
+        let msg_type = MsgTypeField {
             fd: Field::String(35, "A".to_string()),
         };
         assert_eq!(msg_type, msg.msg_type().unwrap());
