@@ -16,36 +16,49 @@ pub enum Field {
     Char(u16, char),
 }
 
-impl TryFrom<String> for Field {
-    type Error = (); // todo error type...
-
-    fn try_from(s: String) -> Result<Self, Self::Error> {
-        println!("From<String> for Field: {}", &s);
-        let two_parts = s.split_once('=');
-        match two_parts {
-            None => Err(()),
-            Some((s_tag, s_value)) => {
-                println!("parsing tag: {}, field: {} into Field", s_tag, s_value);
-
-                // figure out the tag
-                let tag: u16 = s_tag.parse::<u16>().unwrap();
-
-                // build field using the tag & value
-                match tag {
-                    // todo generate this
-                    58 | 35 => Ok(Self::String(tag, s_value.to_string())),
-                    _ => Err(()),
-                }
-            }
-        }
-    }
-}
-
 impl Field {
-    pub fn string_value(&self) -> Result<&str, FieldTypeMismatchError> {
+    ///
+    /// # Errors
+    ///
+    pub fn as_str_safe(&self) -> Result<&str, FieldTypeMismatchError> {
         match self {
             Field::String(_, v) => Ok(v),
             _ => Err(FieldTypeMismatchError {}),
+        }
+    }
+
+    ///
+    /// # Errors
+    ///
+    /// # Panics
+    ///
+    pub fn as_str(&self) -> &str {
+        match self {
+            Field::String(_, v) => v,
+            _ => panic!(""),
+        }
+    }
+
+    ///
+    /// # Errors
+    ///
+    pub const fn as_i32_safe(&self) -> Result<i32, FieldTypeMismatchError> {
+        match self {
+            Field::Int(_, v) => Ok(*v),
+            _ => Err(FieldTypeMismatchError {}),
+        }
+    }
+
+    ///
+    /// # Errors
+    ///
+    /// # Panics
+    ///
+    #[must_use]
+    pub const fn as_i32(&self) -> i32 {
+        match self {
+            Field::Int(_, v) => *v,
+            _ => panic!(""),
         }
     }
 
@@ -73,6 +86,33 @@ impl Field {
             Field::TagNum(t, v) | Field::SeqNum(t, v) => {
                 format!("{}={}{}", t, v, separator)
             }
+        }
+    }
+}
+
+// parse string (35=D) into Field{35, "D"}
+impl TryFrom<String> for Field {
+    type Error = (); // todo error type...
+
+    fn try_from(s: String) -> Result<Self, Self::Error> {
+        println!("From<String> for Field: {}", &s);
+        let two_parts = s.split_once('=');
+        match two_parts {
+            Some((s_tag, s_value)) => {
+                println!("parsing tag: {}, field: {} into Field", s_tag, s_value);
+
+                // figure out the tag
+                let tag: u16 = s_tag.parse::<u16>().unwrap();
+
+                // build field using the tag & value
+                match tag {
+                    // todo generate this
+                    58 | 35 => Ok(Self::String(tag, s_value.to_string())),
+                    1 => Ok(Self::Int(tag, str::parse::<i32>(s_value).unwrap())),
+                    _ => Err(()),
+                }
+            }
+            None => Err(()),
         }
     }
 }

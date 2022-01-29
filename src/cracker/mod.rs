@@ -39,7 +39,6 @@ mod tests {
     use crate::application::FixApp;
     use crate::cracker::Cracker;
     use crate::model::message::Message;
-    use crate::model::twopointoh::MsgType;
 
     struct TestApp {
         messages: Vec<Message>,
@@ -59,7 +58,7 @@ mod tests {
     #[test]
     fn basic_cracker() {
         // build up a FIX message, that we 'received'
-        let fields = vec!["35=A", "58=Test"];
+        let fields = vec!["35=A", "58=Test", "1=123"];
         let mut buf = BytesMut::with_capacity(1024);
         for field in fields {
             buf.put_slice(field.as_bytes());
@@ -81,25 +80,14 @@ mod tests {
         let msg_count = b.messages.len();
         assert_eq!(1, msg_count);
 
-        let mmssssgggg = b.messages.first().unwrap();
-        assert_eq!(
-            "A",
-            mmssssgggg
-                // .header()
-                .get_field(MsgType::tag())
-                .ok()
-                .unwrap()
-                .string_value()
-                .unwrap()
-        );
-        assert_eq!(
-            "Test",
-            mmssssgggg
-                .get_field(58)
-                .ok()
-                .unwrap()
-                .string_value()
-                .unwrap()
-        );
+        let message = b.messages.first().unwrap();
+        if let Ok(text) = message.get_field_safe(58) {
+            assert_eq!("Test", text.as_str_safe().unwrap());
+        }
+        assert_eq!("Test", message.get_field_safe(58).unwrap().as_str());
+        if let Ok(one) = message.get_field_safe(1) {
+            assert_eq!(123, one.as_i32_safe().unwrap());
+        }
+        assert_eq!(123, message.get_field(1).as_i32());
     }
 }

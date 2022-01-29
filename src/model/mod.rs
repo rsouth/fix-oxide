@@ -18,7 +18,7 @@ mod tests {
 
         let text = fields.get_field(58).ok().unwrap();
         assert_eq!(text.tag(), 58);
-        assert_eq!(text.string_value().unwrap(), "Test");
+        assert_eq!(text.as_str_safe().unwrap(), "Test");
 
         // only added 1 tag
         assert_eq!(1, fields.iter().count());

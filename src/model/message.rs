@@ -33,11 +33,11 @@ impl From<NoSuchField> for UnknownMsgTypeError {
 
 impl Message {
     #[must_use]
-    pub fn of_type<T>(msg_type: T) -> Message
+    pub fn of_type<T>(msg_type: T) -> Self
     where
         T: Into<String>,
     {
-        Message {
+        Self {
             header: FieldSet::with(vec![Field::String(MsgType::tag(), msg_type.into())]),
             body: FieldSet::default(),
             trailer: FieldSet::default(),
@@ -54,17 +54,32 @@ impl Message {
         }
     }
 
-    // todo search all fielsets
     ///
     /// # Errors
     ///
-    pub fn get_field(&self, tag: u16) -> Result<&Field, NoSuchField> {
+    pub fn get_field_safe(&self, tag: u16) -> Result<&Field, NoSuchField> {
         if let Ok(s) = self.header.get_field(tag) {
             Ok(s)
         } else if let Ok(s) = self.body.get_field(tag) {
             Ok(s)
         } else {
             Err(NoSuchField { tag })
+        }
+    }
+
+    ///
+    /// # Errors
+    ///
+    /// # Panics
+    ///
+    #[must_use]
+    pub fn get_field(&self, tag: u16) -> &Field {
+        if let Ok(s) = self.header.get_field(tag) {
+            s
+        } else if let Ok(s) = self.body.get_field(tag) {
+            s
+        } else {
+            self.body.get_field(tag).unwrap()
         }
     }
 
@@ -80,7 +95,8 @@ impl Message {
     pub fn to_wire_bytes(&self) -> Vec<u8> {
         // todo temp. impl.
         self.to_string()
-            .replace('|', '\x01'.to_string().as_str())
+            // .replace('|', '\x01'.to_string().as_str())
+            .replace("|", "\x01")
             .into_bytes()
     }
 

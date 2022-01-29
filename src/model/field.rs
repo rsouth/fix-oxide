@@ -56,13 +56,12 @@ impl FieldSet {
 /// --- Field impls which _do not_ need to be generated
 
 impl Field {
+    // todo do we need is_body and is_trailer also?
     // todo NEED THIS but should pull from config
     #[must_use]
     pub const fn is_header_field(&self) -> bool {
         matches!(self.tag(), 8 | 35)
     }
-
-    // todo do we need is_body and is_trailer also?
 
     #[must_use]
     pub fn to_bytes(&self) -> Box<[u8]> {
