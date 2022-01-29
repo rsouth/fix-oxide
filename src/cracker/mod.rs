@@ -11,7 +11,7 @@ struct Cracker<'a> {
 
 // todo link to FixApplication...
 impl Cracker<'_> {
-    pub fn crack(&mut self, msg: Bytes) {
+    pub fn crack(&mut self, msg: &Bytes) {
         let msg_string = String::from_utf8_lossy(msg.as_ref()).to_string();
         let fields: Vec<Field> = msg_string
             .split('\x01')
@@ -69,7 +69,7 @@ mod tests {
         let mut cracker = Cracker { app: Box::new(app) };
 
         let b = Bytes::from(buf);
-        cracker.crack(b);
+        cracker.crack(&b);
 
         let a: Box<dyn FixApp> = cracker.app;
         let b: &TestApp = match a.as_any().downcast_ref::<TestApp>() {

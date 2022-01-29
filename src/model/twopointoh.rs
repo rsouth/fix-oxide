@@ -1,6 +1,8 @@
 use std::fmt::Formatter;
+use std::str::FromStr;
 
 use itertools::Itertools;
+use rust_decimal::Decimal;
 
 use crate::model::field::{FieldSet, FieldTypeMismatchError};
 
@@ -10,10 +12,10 @@ use crate::model::field::{FieldSet, FieldTypeMismatchError};
 pub enum Field {
     Int(u16, i32),
     TagNum(u16, u128),
-    // todo check
     SeqNum(u16, u128),
     String(u16, String),
     Char(u16, char),
+    Price(u16, Decimal),
 }
 
 impl Field {
@@ -32,6 +34,7 @@ impl Field {
     ///
     /// # Panics
     ///
+    #[must_use]
     pub fn as_str(&self) -> &str {
         match self {
             Field::String(_, v) => v,
@@ -65,7 +68,8 @@ impl Field {
     #[must_use]
     pub const fn tag(&self) -> u16 {
         match self {
-            Field::Int(t, _)
+            Field::Price(t, _)
+            | Field::Int(t, _)
             | Field::TagNum(t, _)
             | Field::SeqNum(t, _)
             | Field::String(t, _)
@@ -86,6 +90,8 @@ impl Field {
             Field::TagNum(t, v) | Field::SeqNum(t, v) => {
                 format!("{}={}{}", t, v, separator)
             }
+            // Decimal
+            Field::Price(t, v) => format!("{}={}{}", t, v, separator),
         }
     }
 }
@@ -109,6 +115,8 @@ impl TryFrom<String> for Field {
                     // todo generate this
                     58 | 35 => Ok(Self::String(tag, s_value.to_string())),
                     1 => Ok(Self::Int(tag, str::parse::<i32>(s_value).unwrap())),
+                    5 => Ok(Self::Char(tag, str::parse::<char>(s_value).unwrap())),
+                    54 => Ok(Self::Price(tag, Decimal::from_str(s_value).unwrap())),
                     _ => Err(()),
                 }
             }
@@ -121,12 +129,12 @@ impl TryFrom<String> for Field {
 
 // todo this whole jobbo will be generated
 impl FieldSet {
-    fn get_msg_type(&self) -> Result<MsgType, UnknownField> {
-        self.iter()
-            .find_or_first(|p| p.tag() == MsgType::tag())
-            .map(|i| MsgType { fd: i.clone() })
-            .ok_or(UnknownField {})
-    }
+    // fn get_msg_type(&self) -> Result<MsgType, UnknownField> {
+    //     self.iter()
+    //         .find_or_first(|p| p.tag() == MsgType::tag())
+    //         .map(|i| MsgType { fd: i.clone() })
+    //         .ok_or(UnknownField {})
+    // }
 
     // todo generate get_clordid(&self) etc
 
@@ -197,17 +205,6 @@ impl StringField {
 impl std::fmt::Display for StringField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", self.tag(), self.value())
-    }
-}
-
-// ----- Errors...
-
-/// unable to convert from i32 to FieldType
-pub struct UnknownField;
-
-impl std::fmt::Display for UnknownField {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "error message here")
     }
 }
 

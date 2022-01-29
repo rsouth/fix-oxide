@@ -4,9 +4,10 @@ use std::collections::HashMap;
 use std::fmt::Formatter;
 use std::vec::IntoIter;
 
+use crate::model;
 use itertools::Itertools;
 
-use crate::model::twopointoh::Field;
+use crate::model::twopointoh::{Field, MsgType};
 
 // todo thinking, nothing here should be generated; those impls in a different file
 
@@ -18,6 +19,16 @@ pub struct FieldSet {
 }
 
 impl FieldSet {
+    ///
+    /// # Errors
+    ///
+    pub fn get_msg_type(&self) -> Result<MsgType, UnknownField> {
+        self.iter()
+            .find_or_first(|p| p.tag() == MsgType::tag())
+            .map(|i| MsgType { fd: i.clone() })
+            .ok_or(UnknownField {})
+    }
+
     #[must_use]
     pub fn with(fields: Vec<Field>) -> Self {
         Self {
@@ -49,7 +60,7 @@ impl FieldSet {
         self.fields
             .iter()
             .map(|s| s.1.clone())
-            .sorted_by_key(|k| k.tag())
+            .sorted_by_key(model::twopointoh::Field::tag)
     }
 }
 
@@ -95,5 +106,13 @@ pub struct FieldTypeMismatchError;
 impl fmt::Display for FieldTypeMismatchError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "Type mismatch")
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct UnknownField;
+impl std::fmt::Display for UnknownField {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "error message here")
     }
 }
