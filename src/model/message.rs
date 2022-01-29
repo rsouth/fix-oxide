@@ -1,174 +1,172 @@
-use core::convert::Into;
-use core::default::Default;
 use std::fmt;
+use std::fmt::Formatter;
 
-use crate::model::field::{Field, FieldSet};
-use crate::model::message;
-use crate::model::tag::Tag;
+use crate::model::field::{FieldSet, NoSuchField};
+use crate::model::message_type::UnknownMsgTypeError;
+use crate::model::twopointoh::{Field, MsgType};
 
-#[derive(Debug, Eq, PartialEq)]
-pub enum MsgType {
-    Unknown,
-    NotSet,
-    Logon,
-    // NewOrderSingle,
-}
-
-#[derive(Debug, Clone)]
-struct UnknownMsgTypeError {
-    val: String,
-}
-
-impl fmt::Display for UnknownMsgTypeError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Unknown MsgType value: {}", self.val)
-    }
-}
-
-impl From<&str> for MsgType {
-    fn from(msg_type: &str) -> Self {
-        match msg_type {
-            "A" => MsgType::Logon,
-            _ => MsgType::Unknown,
-        }
-    }
-}
-
-impl From<MsgType> for &str {
-    fn from(msg_type: MsgType) -> Self {
-        match msg_type {
-            MsgType::Logon => "A",
-            MsgType::Unknown | MsgType::NotSet => "",
-        }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::model::field::Field;
-    use crate::model::message::{Logon, Message};
-    use crate::model::tag::Tag;
-
-    #[test]
-    fn basic_fieldset_tests() {
-        let mut msg = Logon::default();
-
-        let fld = Field::String(Tag::Text, "Testing".to_string());
-        msg.body_mut().set_field(fld);
-
-        let expected = "35=A|58=Testing|";
-        assert_eq!(expected, msg.to_string());
-
-        let expected = vec![
-            51_u8, 53_u8, 61_u8, 65_u8, 1_u8, 53_u8, 56_u8, 61_u8, 84_u8, 101_u8, 115_u8, 116_u8,
-            105_u8, 110_u8, 103_u8, 1_u8,
-        ];
-        assert_eq!(expected, msg.to_bytes());
-    }
-}
-
-impl TryFrom<FieldSet> for Box<dyn Message> {
-    type Error = ();
-
-    fn try_from(field_set: FieldSet) -> Result<Self, Self::Error> {
-        let maybe_message = match field_set.get_field(Tag::MsgType) {
-            Ok(field) => {
-                let msg_type = MsgType::from(field.string_value().unwrap());
-                match msg_type {
-                    MsgType::Logon => Ok(Box::new(message::Logon::default())),
-                    // MsgType::NewOrderSingle => Ok(crate::model::message::NewOrderSingle::default()),
-                    _ => Err(()),
-                }
-            }
-            Err(_) => Err(()),
-        };
-
-        match maybe_message {
-            Ok(mut boxed_message) => {
-                for field in field_set.iter() {
-                    if field.tag() != Tag::MsgType {
-                        //  todo shouldn't need this. is there a way we can determine which fields are for header? a mapping mayhaps
-                        boxed_message.body_mut().set_field(field.clone());
-                    }
-                }
-                Ok(boxed_message)
-            }
-            Err(_) => Err(()),
-        }
-    }
-}
-
-pub trait Message {
-    fn msg_type(&self) -> MsgType;
-
-    fn header(&self) -> &FieldSet;
-    fn body(&self) -> &FieldSet;
-    fn body_mut(&mut self) -> &mut FieldSet;
-    fn trailer(&self) -> &FieldSet;
-
-    fn to_string(&self) -> String {
-        // let begin_string = "FIX.4.2";
-        self.header()
-            .iter()
-            .chain(self.body().iter())
-            .chain(self.trailer().iter())
-            .map(std::string::ToString::to_string)
-            .collect()
-    }
-
-    fn to_bytes(&self) -> Vec<u8> {
-        // todo temp. impl.
-        self.to_string()
-            .replace('|', '\x01'.to_string().as_str())
-            .into_bytes()
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct Logon {
+#[derive(Default, Debug)]
+pub struct Message {
     header: FieldSet,
     body: FieldSet,
     trailer: FieldSet,
 }
 
-impl Default for Logon {
-    fn default() -> Self {
-        let mut header = FieldSet::default();
-        header.set_field(Field::String(
-            Tag::MsgType,
-            TryInto::<&str>::try_into(MsgType::Logon)
-                .unwrap()
-                .to_string(),
-        ));
-        Logon {
-            header,
-            body: FieldSet::default(),
-            trailer: FieldSet::default(),
+impl TryFrom<&Field> for MsgType {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
         }
     }
 }
 
-impl Message for Logon {
-    fn msg_type(&self) -> MsgType {
-        match self.header().get_field(Tag::MsgType) {
-            Ok(field) => field.string_value().unwrap().into(),
-            Err(_) => MsgType::NotSet,
+impl From<NoSuchField> for UnknownMsgTypeError {
+    fn from(e: NoSuchField) -> Self {
+        Self { val: e.to_string() }
+    }
+}
+
+impl Message {
+    #[must_use]
+    pub fn of_type<T>(msg_type: T) -> Self
+    where
+        T: Into<String>,
+    {
+        Self {
+            header: FieldSet::with(vec![Field::String(MsgType::tag(), msg_type.into())]),
+            body: FieldSet::default(),
+            trailer: FieldSet::default(),
         }
     }
 
-    fn header(&self) -> &FieldSet {
-        &self.header
+    ///
+    /// # Errors
+    ///
+    pub fn msg_type(&self) -> Result<MsgType, UnknownMsgTypeError> {
+        match self.header.get_field(MsgType::tag()) {
+            Ok(o) => o.try_into(),
+            Err(e) => Err(e.into()),
+        }
     }
 
-    fn body(&self) -> &FieldSet {
-        &self.body
+    ///
+    /// # Errors
+    ///
+    pub fn get_field_safe(&self, tag: u16) -> Result<&Field, NoSuchField> {
+        if let Ok(s) = self.header.get_field(tag) {
+            Ok(s)
+        } else if let Ok(s) = self.body.get_field(tag) {
+            Ok(s)
+        } else {
+            Err(NoSuchField { tag })
+        }
     }
 
-    fn body_mut(&mut self) -> &mut FieldSet {
-        &mut self.body
+    ///
+    /// # Errors
+    ///
+    /// # Panics
+    ///
+    #[must_use]
+    pub fn get_field(&self, tag: u16) -> &Field {
+        if let Ok(s) = self.header.get_field(tag) {
+            s
+        } else if let Ok(s) = self.body.get_field(tag) {
+            s
+        } else {
+            self.body.get_field(tag).unwrap()
+        }
     }
 
-    fn trailer(&self) -> &FieldSet {
-        &self.trailer
+    pub fn set_field(&mut self, field: Field) {
+        if field.is_header_field() {
+            self.header.set_field(field);
+        } else {
+            self.body.set_field(field);
+        }
+    }
+
+    #[must_use]
+    pub fn to_wire_bytes(&self) -> Vec<u8> {
+        // todo temp. impl.
+        self.to_string()
+            // .replace('|', '\x01'.to_string().as_str())
+            .replace("|", "\x01")
+            .into_bytes()
+    }
+
+    fn add_all(&mut self, field_set: FieldSet) {
+        field_set.into_iter().for_each(|l| self.body.set_field(l));
+    }
+}
+
+impl From<FieldSet> for Message {
+    fn from(field_set: FieldSet) -> Self {
+        let mut message = Message::default();
+        field_set.into_iter().for_each(|field| {
+            message.set_field(field);
+        });
+        message
+    }
+}
+
+impl fmt::Display for Message {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        let pretty_string: String = self
+            .header
+            .iter()
+            .chain(self.body.iter())
+            .chain(self.trailer.iter())
+            .map(std::string::ToString::to_string)
+            .collect();
+        write!(f, "{}", pretty_string)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::model::message::Message;
+    use crate::model::twopointoh::Field;
+
+    #[test]
+    fn basic_logon_message_test() {
+        let mut logon_msg = Message::of_type("A");
+
+        let text_field = Field::String(58, "Testing".to_string());
+        logon_msg.set_field(text_field);
+
+        let expected = "35=A|58=Testing|";
+        assert_eq!(expected, logon_msg.to_string());
+
+        let expected = vec![
+            51_u8, 53_u8, 61_u8, 65_u8, 1_u8, 53_u8, 56_u8, 61_u8, 84_u8, 101_u8, 115_u8, 116_u8,
+            105_u8, 110_u8, 103_u8, 1_u8,
+        ];
+        assert_eq!(expected, logon_msg.to_wire_bytes());
+    }
+
+    #[test]
+    fn adding_fields() {
+        let mut msg = Message::of_type("ABC");
+
+        let field = Field::String(11, "ClOrdID123".to_string());
+        msg.set_field(field);
+
+        let expected = "35=ABC|11=ClOrdID123|";
+        assert_eq!(expected, msg.to_string());
+
+        // Add Text and update ClOrdID
+        let field = Field::String(58, "Testing!".to_string());
+        msg.set_field(field);
+        let field = Field::String(11, "NewClOrdID".to_string());
+        msg.set_field(field);
+
+        let expected = "35=ABC|11=NewClOrdID|58=Testing!|";
+        assert_eq!(expected, msg.to_string());
     }
 }

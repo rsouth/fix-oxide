@@ -5,20 +5,11 @@ use std::fmt::Formatter;
 use crate::engine::FailedToCreateSession::SessionNotFound;
 use crate::session::{SessionID, Settings};
 
+#[derive(Default)]
 pub struct Engine {
     sessions: Vec<SessionID>,
     session_settings: HashMap<SessionID, Settings>,
     session_state: HashMap<SessionID, State>,
-}
-
-impl Default for Engine {
-    fn default() -> Self {
-        Engine {
-            sessions: vec![],
-            session_settings: HashMap::new(),
-            session_state: Default::default(),
-        }
-    }
 }
 
 #[derive(Debug)]
@@ -35,10 +26,14 @@ impl fmt::Display for FailedToCreateSession {
 }
 
 impl Engine {
+    #[must_use]
     pub fn sessions(&self) -> &[SessionID] {
         self.sessions.as_slice()
     }
 
+    ///
+    /// # Errors
+    ///
     pub fn create_session(
         &mut self,
         settings: Settings,
@@ -54,11 +49,11 @@ impl Engine {
         }
 
         self.sessions.push(session_id.clone());
-        self.session_state
-            .insert(session_id.clone(), State::Created);
+        self.session_state.insert(session_id, State::Created);
         self.sessions.last().ok_or(SessionNotFound)
     }
 
+    #[must_use]
     pub fn session_status(&self, session_id: &SessionID) -> Option<&State> {
         self.session_state.get(session_id)
     }
@@ -71,8 +66,11 @@ impl Engine {
 // state machine; state transitions here based on events.
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum State {
-    Created,   // session has been created but not yet initialised
-    Downtime,  // session has been initialised, but scheduled downtime is in effect
-    LoggedIn,  // session has been initialised, and is logged in
+    Created,
+    // session has been created but not yet initialised
+    Downtime,
+    // session has been initialised, but scheduled downtime is in effect
+    LoggedIn,
+    // session has been initialised, and is logged in
     LoggedOut, // session has been initialised, but is not logged in (failed? disconnected? etc)
 }

@@ -5,12 +5,14 @@ pub struct SessionID {
     sender_comp_id: String,
     target_comp_id: String,
 }
+
 impl SessionID {
-    pub fn from_settings(settings: &Settings) -> SessionID {
-        SessionID {
-            begin_string: settings.begin_string.clone().into(),
-            sender_comp_id: settings.sender_comp_id.to_owned(),
-            target_comp_id: settings.target_comp_id.to_owned(),
+    #[must_use]
+    pub fn from_settings(settings: &Settings) -> Self {
+        Self {
+            begin_string: settings.begin_string.into(),
+            sender_comp_id: settings.sender_comp_id.clone(),
+            target_comp_id: settings.target_comp_id.clone(),
         }
     }
 }
@@ -61,7 +63,7 @@ mod tests {
             session_type: SessionType::Initiator,
         };
 
-        let session_id = engine.create_session(settings).unwrap().to_owned();
+        let session_id = engine.create_session(settings).unwrap().clone();
         assert_eq!(1, engine.sessions().len());
 
         let settings = Settings {

@@ -1,19 +1,18 @@
 use bytes::Bytes;
 
 use crate::application::FixApp;
-use crate::model::field::{Field, FieldSet};
+use crate::model::field::FieldSet;
 use crate::model::message::Message;
-use crate::model::tag::Tag;
+use crate::model::twopointoh::Field;
 
 struct Cracker<'a> {
-    app: Box<dyn FixApp + 'a>, // app: dyn &FixApp,
+    app: Box<dyn FixApp + 'a>,
 }
 
 // todo link to FixApplication...
 impl Cracker<'_> {
-    pub(crate) fn crack(&mut self, msg: Bytes) {
+    pub fn crack(&mut self, msg: &Bytes) {
         let msg_string = String::from_utf8_lossy(msg.as_ref()).to_string();
-
         let fields: Vec<Field> = msg_string
             .split('\x01')
             .into_iter()
@@ -25,18 +24,9 @@ impl Cracker<'_> {
             .collect();
 
         let field_set = FieldSet::with(fields);
-        let message: Result<Box<dyn Message>, ()> = field_set.try_into();
+        let message: Message = field_set.into();
 
-        match message {
-            Ok(boxed_message) => self.app.on_message(boxed_message),
-            Err(_) => println!("didn't manage to create a message!"),
-        }
-    }
-}
-
-impl From<&[u8]> for Field {
-    fn from(_data: &[u8]) -> Self {
-        Field::String(Tag::Text, "wer".to_string())
+        self.app.on_message(message);
     }
 }
 
@@ -48,23 +38,18 @@ mod tests {
 
     use crate::application::FixApp;
     use crate::cracker::Cracker;
-    use crate::model::message::{Logon, Message};
-    use crate::model::tag::Tag;
+    use crate::model::message::Message;
 
     struct TestApp {
-        messages: Vec<Box<dyn Message>>,
+        messages: Vec<Message>,
     }
+
     impl FixApp for TestApp {
         fn as_any(&self) -> &dyn Any {
             self
         }
 
-        fn on_logon(&mut self, message: Logon) {
-            println!("TestApp adding Logon: {:#?}", message.to_string());
-            self.messages.push(Box::new(message));
-        }
-
-        fn on_message(&mut self, message: Box<dyn Message>) {
+        fn on_message(&mut self, message: Message) {
             println!("TestApp adding: {:#?}", message.to_string());
             self.messages.push(message);
         }
@@ -73,7 +58,7 @@ mod tests {
     #[test]
     fn basic_cracker() {
         // build up a FIX message, that we 'received'
-        let fields = vec!["35=A", "58=Test"];
+        let fields = vec!["35=A", "58=Test", "1=123"];
         let mut buf = BytesMut::with_capacity(1024);
         for field in fields {
             buf.put_slice(field.as_bytes());
@@ -84,7 +69,7 @@ mod tests {
         let mut cracker = Cracker { app: Box::new(app) };
 
         let b = Bytes::from(buf);
-        cracker.crack(b);
+        cracker.crack(&b);
 
         let a: Box<dyn FixApp> = cracker.app;
         let b: &TestApp = match a.as_any().downcast_ref::<TestApp>() {
@@ -95,26 +80,14 @@ mod tests {
         let msg_count = b.messages.len();
         assert_eq!(1, msg_count);
 
-        let mmssssgggg = b.messages.first().unwrap();
-        assert_eq!(
-            "A",
-            mmssssgggg
-                .header()
-                .get_field(Tag::MsgType)
-                .ok()
-                .unwrap()
-                .string_value()
-                .unwrap()
-        );
-        assert_eq!(
-            "Test",
-            mmssssgggg
-                .body()
-                .get_field(Tag::Text)
-                .ok()
-                .unwrap()
-                .string_value()
-                .unwrap()
-        );
+        let message = b.messages.first().unwrap();
+        if let Ok(text) = message.get_field_safe(58) {
+            assert_eq!("Test", text.as_str_safe().unwrap());
+        }
+        assert_eq!("Test", message.get_field_safe(58).unwrap().as_str());
+        if let Ok(one) = message.get_field_safe(1) {
+            assert_eq!(123, one.as_i32_safe().unwrap());
+        }
+        assert_eq!(123, message.get_field(1).as_i32());
     }
 }
