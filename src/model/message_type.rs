@@ -1,7 +1,7 @@
 use std::fmt;
 
 use crate::model::field::FieldSet;
-use crate::model::twopointoh::MsgTypeField;
+use crate::model::generated::generated::MsgTypeField;
 
 #[derive(Debug, Clone)]
 pub struct UnknownMsgTypeError {

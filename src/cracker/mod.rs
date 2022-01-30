@@ -2,8 +2,8 @@ use bytes::Bytes;
 
 use crate::application::FixApp;
 use crate::model::field::FieldSet;
+use crate::model::generated::generated::Field;
 use crate::model::message::Message;
-use crate::model::twopointoh::Field;
 
 struct Cracker<'a> {
     app: Box<dyn FixApp + 'a>,
@@ -58,7 +58,7 @@ mod tests {
     #[test]
     fn basic_cracker() {
         // build up a FIX message, that we 'received'
-        let fields = vec!["35=A", "58=Test", "1=123"];
+        let fields = vec!["35=A", "58=Test", "38=123"];
         let mut buf = BytesMut::with_capacity(1024);
         for field in fields {
             buf.put_slice(field.as_bytes());
@@ -85,9 +85,9 @@ mod tests {
             assert_eq!("Test", text.as_str_safe().unwrap());
         }
         assert_eq!("Test", message.get_field_safe(58).unwrap().as_str());
-        if let Ok(one) = message.get_field_safe(1) {
+        if let Ok(one) = message.get_field_safe(38) {
             assert_eq!(123, one.as_i32_safe().unwrap());
         }
-        assert_eq!(123, message.get_field(1).as_i32());
+        assert_eq!(123, message.get_field(38).as_i32());
     }
 }

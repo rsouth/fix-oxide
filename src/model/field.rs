@@ -5,10 +5,8 @@ use std::fmt::Formatter;
 use std::str::FromStr;
 use std::vec::IntoIter;
 
-use crate::model;
+use crate::model::generated::generated::{Field, MsgTypeField};
 use itertools::Itertools;
-
-use crate::model::twopointoh::{Field, MsgTypeField};
 
 // todo thinking, nothing here should be generated; those impls in a different file
 
@@ -79,7 +77,7 @@ impl FieldSet {
         self.fields
             .iter()
             .map(|s| s.1.clone())
-            .sorted_by_key(model::twopointoh::Field::tag)
+            .sorted_by_key(Field::tag)
     }
 }
 

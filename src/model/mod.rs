@@ -1,15 +1,18 @@
 pub mod field;
+pub mod generated;
 pub mod message;
 pub mod message_type;
 pub mod twopointoh;
+
+pub use generated as types;
 
 #[cfg(test)]
 mod tests {
     use std::ops::AddAssign;
 
     use crate::model::field::FieldSet;
+    use crate::model::generated::generated::{Field, MsgTypeField};
     use crate::model::message::Message;
-    use crate::model::twopointoh::{Field, MsgTypeField};
 
     #[test]
     fn basic_fieldset_tests() {

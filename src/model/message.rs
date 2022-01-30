@@ -2,8 +2,8 @@ use std::fmt;
 use std::fmt::Formatter;
 
 use crate::model::field::{FieldSet, NoSuchField};
+use crate::model::generated::generated::{Field, MsgTypeField};
 use crate::model::message_type::UnknownMsgTypeError;
-use crate::model::twopointoh::{Field, MsgTypeField};
 
 #[derive(Default, Debug)]
 pub struct Message {
@@ -130,8 +130,8 @@ impl fmt::Display for Message {
 
 #[cfg(test)]
 mod tests {
+    use crate::model::generated::generated::Field;
     use crate::model::message::Message;
-    use crate::model::twopointoh::Field;
 
     #[test]
     fn basic_logon_message_test() {
