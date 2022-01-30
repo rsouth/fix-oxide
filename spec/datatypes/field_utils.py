@@ -1,5 +1,5 @@
-from spec.config import enum_variants
-from spec.datatypes import Field
+from ..config.config import enum_variants
+from ..datatypes.datatypes import Field
 
 
 class FieldUtils:

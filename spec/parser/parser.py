@@ -1,7 +1,7 @@
 from xml.etree import ElementTree as xml
 
-from spec.config import enum_variants, exclude_types
-from spec.datatypes import Field
+from spec.config.config import enum_variants, exclude_types
+from spec.datatypes.datatypes import Field
 
 
 class Parser:

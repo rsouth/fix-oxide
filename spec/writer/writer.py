@@ -1,8 +1,8 @@
 from typing import TextIO
 
-from spec.config import return_types, struct_types, enum_variants, exclude_types, method_names, enum_variants_parse_function
-from spec.field_utils import FieldUtils
-from spec.datatypes import Field
+from ..config.config import return_types, struct_types, enum_variants, exclude_types, method_names
+from ..datatypes.field_utils import FieldUtils
+from ..datatypes.datatypes import Field
 
 
 class Writer:
@@ -13,8 +13,8 @@ class Writer:
 
     def init(self):
         from os import mkdir, path
-        if not path.exists("../src/model/generated/"):
-            mkdir("../src/model/generated/")
+        if not path.exists("../src/model/generated"):
+            mkdir("../src/model/generated")
         self.fd = open("../src/model/generated/generated.rs", "w", newline='\n')
         self.write_imports()
 
@@ -122,7 +122,7 @@ class Writer:
         # enum_var -> [tag_nums...]
         _tag_num_enum_variant = {}
         for field in fields:
-            from config import enum_variants_parse_function
+            from spec.config.config import enum_variants_parse_function
             if field.type not in exclude_types and field.type in enum_variants:
                 enum_type = enum_variants.get(field.type)
                 if _tag_num_enum_variant.get(enum_type) is None:
