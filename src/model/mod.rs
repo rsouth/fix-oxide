@@ -2,16 +2,14 @@ pub mod field;
 pub mod generated;
 pub mod message;
 pub mod message_type;
-pub mod twopointoh;
-
-pub use generated as types;
 
 #[cfg(test)]
 mod tests {
+    use crate::model::BeginString;
     use std::ops::AddAssign;
 
     use crate::model::field::FieldSet;
-    use crate::model::generated::generated::{Field, MsgTypeField};
+    use crate::model::generated::fields::Field;
     use crate::model::message::Message;
 
     #[test]
@@ -36,10 +34,22 @@ mod tests {
     fn basic_logout_message_test() {
         let msg = Message::of_type("A");
 
-        let msg_type = MsgTypeField {
-            fd: Field::String(35, "A".to_string()),
-        };
-        assert_eq!(msg_type, msg.msg_type().unwrap());
+        let msg_type = Field::String(35, "A".to_string());
+
+        assert_eq!(msg_type, msg.get_field(35).to_owned());
         // assert_eq!(1, msg.header().iter().count());
     }
+}
+
+#[derive(Copy, Debug, Clone)]
+pub enum BeginString {
+    Fix40,
+    Fix41,
+    Fix42,
+    Fix43,
+    Fix44,
+    Fix50,
+    Fix50Sp1,
+    Fix50Sp2,
+    Fixt11,
 }

@@ -5,7 +5,7 @@ use std::fmt::Formatter;
 use std::str::FromStr;
 use std::vec::IntoIter;
 
-use crate::model::generated::generated::{Field, MsgTypeField};
+use crate::model::generated::fields::Field;
 use itertools::Itertools;
 
 // todo thinking, nothing here should be generated; those impls in a different file
@@ -39,10 +39,10 @@ impl FieldSet {
     ///
     /// # Errors
     ///
-    pub fn get_msg_type(&self) -> Result<MsgTypeField, UnknownField> {
+    pub fn get_msg_type(&self) -> Result<&str, UnknownField> {
         self.iter()
-            .find_or_first(|p| p.tag() == MsgTypeField::tag())
-            .map(|i| MsgTypeField { fd: i.clone() })
+            .find_or_first(|p| p.tag() == 35)
+            .map(|i| i.as_str())
             .ok_or(UnknownField {})
     }
 

@@ -1,3 +1,6 @@
+use crate::model::BeginString;
+use crate::model::BeginString::Fix40;
+
 // used to refer to a session
 #[derive(Clone, Eq, PartialEq, Hash)]
 pub struct SessionID {
@@ -17,20 +20,45 @@ impl SessionID {
     }
 }
 
-impl From<BeginString> for String {
-    fn from(begin_string: BeginString) -> Self {
-        match begin_string {
-            BeginString::Fix42 => "FIX.4.2".to_string(),
-            BeginString::Fix44 => "FIX.4.4".to_string(),
+impl From<String> for BeginString {
+    fn from(begin_string: String) -> Self {
+        match begin_string.as_str() {
+            "FIX.4.0" => BeginString::Fix40,
+            "FIX.4.1" => BeginString::Fix41,
+            "FIX.4.2" => BeginString::Fix42,
+            "FIX.4.3" => BeginString::Fix43,
+            "FIX.4.4" => BeginString::Fix44,
+            "FIX.5.0" => BeginString::Fix50,
+            _ => BeginString::Fixt11,
         }
     }
 }
 
-#[derive(Copy, Debug, Clone)]
-enum BeginString {
-    Fix42,
-    Fix44,
+impl From<BeginString> for String {
+    fn from(begin_string: BeginString) -> Self {
+        match begin_string {
+            BeginString::Fix40 => "FIX.4.0".to_string(),
+            BeginString::Fix41 => "FIX.4.1".to_string(),
+            BeginString::Fix42 => "FIX.4.2".to_string(),
+            BeginString::Fix43 => "FIX.4.3".to_string(),
+            BeginString::Fix44 => "FIX.4.4".to_string(),
+            BeginString::Fix50 => "FIX.5.0".to_string(),
+            BeginString::Fix50Sp1 => "TODO".to_string(),
+            BeginString::Fix50Sp2 => "TODO".to_string(),
+            BeginString::Fixt11 => "TODO".to_string(),
+        }
+    }
 }
+
+// impl From<BeginString> for String {
+//     fn from(begin_string: BeginString) -> Self {
+//         match begin_string {
+//             BeginString::Fix42 => "FIX.4.2".to_string(),
+//             BeginString::Fix44 => "FIX.4.4".to_string(),
+//             _ => {}
+//         }
+//     }
+// }
 
 #[derive(Clone, Debug)]
 pub struct Settings {
@@ -50,7 +78,8 @@ enum SessionType {
 #[cfg(test)]
 mod tests {
     use crate::engine::{Engine, State};
-    use crate::session::{BeginString, SessionType, Settings};
+    use crate::model::BeginString;
+    use crate::session::{SessionType, Settings};
 
     #[test]
     fn it_works() {

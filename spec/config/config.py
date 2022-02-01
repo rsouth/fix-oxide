@@ -54,9 +54,9 @@ exclude_types = [
 # e.g. String -> Self::String(tag, s_value.to_string())
 #      Int    -> Self::Int(tag, str::parse::<i32>(s_value).unwrap())
 enum_variants_parse_function = {
-    'String': 'Self::String(tag, s_value.to_string())',
-    'Char': 'Self::Char(tag, str::parse::<char>(s_value).unwrap())',
-    'Decimal': 'Self::Decimal(tag, Decimal::from_str(s_value).unwrap())',
-    'Int': 'Self::Int(tag, str::parse::<i32>(s_value).unwrap())',
-    'Currency': 'Self::String(tag, s_value.to_string())',
+    'String': 'Field::String(tag, s_value.to_string())',
+    'Char': 'Field::Char(tag, str::parse::<char>(s_value).unwrap())',
+    'Decimal': 'Field::Decimal(tag, Decimal::from_str(s_value).unwrap())',
+    'Int': 'Field::Int(tag, str::parse::<i32>(s_value).unwrap())',
+    'Currency': 'Field::String(tag, s_value.to_string())',
 }

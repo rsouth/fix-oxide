@@ -5,136 +5,15 @@ use itertools::Itertools;
 use rust_decimal::Decimal;
 
 use crate::model::field::{FieldSet, FieldTypeMismatchError};
+use crate::model::message_type::UnknownMsgTypeError;
+use crate::model::BeginString;
+use crate::model::generated::fields::Field;
 
-#[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq)]
-pub enum Field {
-    String(u16, String),
-    Char(u16, char),
-    Decimal(u16, Decimal),
-    Int(u16, i32),
-}
-
-impl Field {
-
-    ///
-    /// # Errors
-    ///
-    pub fn as_str_safe(&self) -> Result<&str, FieldTypeMismatchError> {
-        match self {
-            Field::String(_, v) => Ok(v),
-            _ => Err(FieldTypeMismatchError {}),
-        }
-    }
-
-    ///
-    /// # Errors
-    ///
-    /// # Panics
-    ///
-    pub fn as_str(&self) -> &str {
-        match self {
-            Field::String(_, v) => v,
-            _ => panic!(),
-        }
-    }
-
-    ///
-    /// # Errors
-    ///
-    pub const fn as_char_safe(&self) -> Result<char, FieldTypeMismatchError> {
-        match self {
-            Field::Char(_, v) => Ok(*v),
-            _ => Err(FieldTypeMismatchError {}),
-        }
-    }
-
-    ///
-    /// # Errors
-    ///
-    /// # Panics
-    ///
-    pub fn as_char(&self) -> char {
-        match self {
-            Field::Char(_, v) => *v,
-            _ => panic!(),
-        }
-    }
-
-    ///
-    /// # Errors
-    ///
-    pub const fn as_decimal_safe(&self) -> Result<Decimal, FieldTypeMismatchError> {
-        match self {
-            Field::Decimal(_, v) => Ok(*v),
-            _ => Err(FieldTypeMismatchError {}),
-        }
-    }
-
-    ///
-    /// # Errors
-    ///
-    /// # Panics
-    ///
-    pub fn as_decimal(&self) -> Decimal {
-        match self {
-            Field::Decimal(_, v) => *v,
-            _ => panic!(),
-        }
-    }
-
-    ///
-    /// # Errors
-    ///
-    pub const fn as_i32_safe(&self) -> Result<i32, FieldTypeMismatchError> {
-        match self {
-            Field::Int(_, v) => Ok(*v),
-            _ => Err(FieldTypeMismatchError {}),
-        }
-    }
-
-    ///
-    /// # Errors
-    ///
-    /// # Panics
-    ///
-    pub fn as_i32(&self) -> i32 {
-        match self {
-            Field::Int(_, v) => *v,
-            _ => panic!(),
-        }
-    }
-
-    #[must_use]
-    pub const fn tag(&self) -> u16 {
-        match self {
-            Field::String(t, _) 
-            | Field::Char(t, _) 
-            | Field::Decimal(t, _) 
-            | Field::Int(t, _) 
-            => *t,
-    }
-}
-
-    #[must_use]
-    pub fn to_delimited_string(&self, separator: char) -> String {
-        match self {
-            // &str
-            Field::String(t, v) => format!("{}={}{}", t, v, separator),
-            // char
-            Field::Char(t, v) => format!("{}={}{}", t, v, separator),
-            // Decimal
-            Field::Decimal(t, v) => format!("{}={}{}", t, v, separator),
-            // i32
-            Field::Int(t, v) => format!("{}={}{}", t, v, separator),
-        }
-    }
-}
+pub struct FIX42CrackerUtils;
 // parse string (35=D) into Field{35, "D"}
-impl TryFrom<String> for Field {
-    type Error = (); // todo error type...
-      
-    fn try_from(s: String) -> Result<Self, Self::Error> {
-        println!("From<String> for Field: {}", &s);
+impl FIX42CrackerUtils {
+    pub fn crack(s: &str) -> Result<Field, ()> {
+        println!("crack for Field: {}", &s);
         let two_parts = s.split_once('=');
         match two_parts {
             Some((s_tag, s_value)) => {
@@ -145,13 +24,13 @@ impl TryFrom<String> for Field {
                    
                 // build field using the tag & value
                 match tag {
-                    1 | 2 | 3 | 5 | 8 | 10 | 11 | 15 | 17 | 19 | 22 | 23 | 26 | 27 | 35 | 37 | 41 | 46 | 48 | 49 | 50 | 55 | 56 | 57 | 58 | 65 | 66 | 69 | 70 | 72 | 76 | 79 | 86 | 92 | 105 | 106 | 107 | 109 | 112 | 115 | 116 | 117 | 120 | 128 | 129 | 131 | 138 | 142 | 143 | 144 | 145 | 147 | 148 | 149 | 161 | 162 | 164 | 166 | 167 | 170 | 171 | 173 | 174 | 175 | 176 | 177 | 178 | 179 | 180 | 181 | 182 | 183 | 184 | 185 | 186 | 187 | 196 | 198 | 214 | 217 | 262 | 278 | 280 | 282 | 283 | 284 | 288 | 289 | 299 | 302 | 305 | 306 | 307 | 309 | 310 | 311 | 312 | 318 | 320 | 322 | 324 | 335 | 336 | 337 | 347 | 372 | 375 | 376 | 379 | 390 | 391 | 392 | 400 | 421 | 439 | 440 | 444 => Ok(Self::String(tag, s_value.to_string())),
+                    1 | 2 | 3 | 5 | 8 | 10 | 11 | 15 | 17 | 19 | 22 | 23 | 26 | 27 | 35 | 37 | 41 | 46 | 48 | 49 | 50 | 55 | 56 | 57 | 58 | 65 | 66 | 69 | 70 | 72 | 76 | 79 | 86 | 92 | 105 | 106 | 107 | 109 | 112 | 115 | 116 | 117 | 120 | 128 | 129 | 131 | 138 | 142 | 143 | 144 | 145 | 147 | 148 | 149 | 161 | 162 | 164 | 166 | 167 | 170 | 171 | 173 | 174 | 175 | 176 | 177 | 178 | 179 | 180 | 181 | 182 | 183 | 184 | 185 | 186 | 187 | 196 | 198 | 214 | 217 | 262 | 278 | 280 | 282 | 283 | 284 | 288 | 289 | 299 | 302 | 305 | 306 | 307 | 309 | 310 | 311 | 312 | 318 | 320 | 322 | 324 | 335 | 336 | 337 | 347 | 372 | 375 | 376 | 379 | 390 | 391 | 392 | 400 | 421 | 439 | 440 | 444 => Ok(Field::String(tag, s_value.to_string())),
 
-                    4 | 13 | 20 | 21 | 24 | 25 | 28 | 29 | 39 | 40 | 47 | 54 | 59 | 61 | 63 | 71 | 77 | 81 | 94 | 104 | 125 | 127 | 139 | 150 | 156 | 160 | 163 | 165 | 206 | 219 | 263 | 269 | 274 | 279 | 281 | 285 | 286 | 291 | 292 | 317 | 327 | 374 | 385 | 388 | 418 | 419 | 433 | 434 | 442 => Ok(Self::Char(tag, str::parse::<char>(s_value).unwrap())),
+                    4 | 13 | 20 | 21 | 24 | 25 | 28 | 29 | 39 | 40 | 47 | 54 | 59 | 61 | 63 | 71 | 77 | 81 | 94 | 104 | 125 | 127 | 139 | 150 | 156 | 160 | 163 | 165 | 206 | 219 | 263 | 269 | 274 | 279 | 281 | 285 | 286 | 291 | 292 | 317 | 327 | 374 | 385 | 388 | 418 | 419 | 433 | 434 | 442 => Ok(Field::Char(tag, str::parse::<char>(s_value).unwrap())),
 
-                    6 | 31 | 44 | 99 | 132 | 133 | 140 | 153 | 188 | 190 | 194 | 202 | 270 | 316 | 332 | 333 | 366 | 426 => Ok(Self::Decimal(tag, Decimal::from_str(s_value).unwrap())),
+                    6 | 31 | 44 | 99 | 132 | 133 | 140 | 153 | 188 | 190 | 194 | 202 | 270 | 316 | 332 | 333 | 366 | 426 => Ok(Field::Decimal(tag, Decimal::from_str(s_value).unwrap())),
 
-                    7 | 9 | 12 | 14 | 16 | 32 | 33 | 34 | 36 | 38 | 45 | 53 | 67 | 68 | 73 | 74 | 78 | 80 | 82 | 83 | 84 | 85 | 87 | 88 | 98 | 102 | 103 | 108 | 110 | 111 | 118 | 119 | 124 | 134 | 135 | 136 | 137 | 146 | 151 | 152 | 154 | 157 | 159 | 169 | 172 | 192 | 197 | 199 | 201 | 203 | 204 | 209 | 210 | 215 | 216 | 264 | 265 | 267 | 268 | 271 | 287 | 290 | 293 | 294 | 295 | 296 | 297 | 298 | 300 | 301 | 303 | 304 | 315 | 319 | 321 | 323 | 326 | 330 | 331 | 334 | 338 | 339 | 340 | 346 | 368 | 369 | 371 | 373 | 378 | 380 | 381 | 382 | 383 | 384 | 386 | 387 | 393 | 394 | 395 | 396 | 397 | 398 | 399 | 401 | 404 | 406 | 408 | 409 | 412 | 414 | 415 | 416 | 417 | 420 | 422 | 423 | 424 | 425 | 427 | 428 | 429 | 430 | 431 | 437 | 441 => Ok(Self::Int(tag, str::parse::<i32>(s_value).unwrap())),
+                    7 | 9 | 12 | 14 | 16 | 32 | 33 | 34 | 36 | 38 | 45 | 53 | 67 | 68 | 73 | 74 | 78 | 80 | 82 | 83 | 84 | 85 | 87 | 88 | 98 | 102 | 103 | 108 | 110 | 111 | 118 | 119 | 124 | 134 | 135 | 136 | 137 | 146 | 151 | 152 | 154 | 157 | 159 | 169 | 172 | 192 | 197 | 199 | 201 | 203 | 204 | 209 | 210 | 215 | 216 | 264 | 265 | 267 | 268 | 271 | 287 | 290 | 293 | 294 | 295 | 296 | 297 | 298 | 300 | 301 | 303 | 304 | 315 | 319 | 321 | 323 | 326 | 330 | 331 | 334 | 338 | 339 | 340 | 346 | 368 | 369 | 371 | 373 | 378 | 380 | 381 | 382 | 383 | 384 | 386 | 387 | 393 | 394 | 395 | 396 | 397 | 398 | 399 | 401 | 404 | 406 | 408 | 409 | 412 | 414 | 415 | 416 | 417 | 420 | 422 | 423 | 424 | 425 | 427 | 428 | 429 | 430 | 431 | 437 | 441 => Ok(Field::Int(tag, str::parse::<i32>(s_value).unwrap())),
 
                     _ => Err(()),
                 }
@@ -186,6 +65,18 @@ impl std::fmt::Display for AccountField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for AccountField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct AdvIdField {
     pub fd: Field,
@@ -209,6 +100,18 @@ impl AdvIdField {
 impl std::fmt::Display for AdvIdField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for AdvIdField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -236,6 +139,18 @@ impl std::fmt::Display for AdvRefIDField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for AdvRefIDField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct AdvSideField {
     pub fd: Field,
@@ -259,6 +174,18 @@ impl AdvSideField {
 impl std::fmt::Display for AdvSideField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for AdvSideField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Char(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -286,6 +213,18 @@ impl std::fmt::Display for AdvTransTypeField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for AdvTransTypeField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct AvgPxField {
     pub fd: Field,
@@ -309,6 +248,18 @@ impl AvgPxField {
 impl std::fmt::Display for AvgPxField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for AvgPxField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Decimal(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -336,6 +287,18 @@ impl std::fmt::Display for BeginSeqNoField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for BeginSeqNoField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct BeginStringField {
     pub fd: Field,
@@ -359,6 +322,18 @@ impl BeginStringField {
 impl std::fmt::Display for BeginStringField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for BeginStringField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -386,6 +361,18 @@ impl std::fmt::Display for BodyLengthField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for BodyLengthField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct CheckSumField {
     pub fd: Field,
@@ -409,6 +396,18 @@ impl CheckSumField {
 impl std::fmt::Display for CheckSumField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for CheckSumField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -436,6 +435,18 @@ impl std::fmt::Display for ClOrdIDField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for ClOrdIDField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct CommissionField {
     pub fd: Field,
@@ -459,6 +470,18 @@ impl CommissionField {
 impl std::fmt::Display for CommissionField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for CommissionField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -486,6 +509,18 @@ impl std::fmt::Display for CommTypeField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for CommTypeField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Char(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct CumQtyField {
     pub fd: Field,
@@ -509,6 +544,18 @@ impl CumQtyField {
 impl std::fmt::Display for CumQtyField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for CumQtyField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -536,6 +583,18 @@ impl std::fmt::Display for CurrencyField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for CurrencyField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct EndSeqNoField {
     pub fd: Field,
@@ -559,6 +618,18 @@ impl EndSeqNoField {
 impl std::fmt::Display for EndSeqNoField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for EndSeqNoField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -586,6 +657,18 @@ impl std::fmt::Display for ExecIDField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for ExecIDField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct ExecRefIDField {
     pub fd: Field,
@@ -609,6 +692,18 @@ impl ExecRefIDField {
 impl std::fmt::Display for ExecRefIDField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for ExecRefIDField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -636,6 +731,18 @@ impl std::fmt::Display for ExecTransTypeField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for ExecTransTypeField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Char(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct HandlInstField {
     pub fd: Field,
@@ -659,6 +766,18 @@ impl HandlInstField {
 impl std::fmt::Display for HandlInstField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for HandlInstField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Char(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -686,6 +805,18 @@ impl std::fmt::Display for IDSourceField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for IDSourceField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct IOIidField {
     pub fd: Field,
@@ -709,6 +840,18 @@ impl IOIidField {
 impl std::fmt::Display for IOIidField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for IOIidField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -736,6 +879,18 @@ impl std::fmt::Display for IOIOthSvcField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for IOIOthSvcField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Char(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct IOIQltyIndField {
     pub fd: Field,
@@ -759,6 +914,18 @@ impl IOIQltyIndField {
 impl std::fmt::Display for IOIQltyIndField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for IOIQltyIndField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Char(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -786,6 +953,18 @@ impl std::fmt::Display for IOIRefIDField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for IOIRefIDField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct IOISharesField {
     pub fd: Field,
@@ -809,6 +988,18 @@ impl IOISharesField {
 impl std::fmt::Display for IOISharesField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for IOISharesField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -836,6 +1027,18 @@ impl std::fmt::Display for IOITransTypeField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for IOITransTypeField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Char(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct LastCapacityField {
     pub fd: Field,
@@ -859,6 +1062,18 @@ impl LastCapacityField {
 impl std::fmt::Display for LastCapacityField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for LastCapacityField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Char(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -886,6 +1101,18 @@ impl std::fmt::Display for LastPxField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for LastPxField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Decimal(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct LastSharesField {
     pub fd: Field,
@@ -909,6 +1136,18 @@ impl LastSharesField {
 impl std::fmt::Display for LastSharesField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for LastSharesField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -936,6 +1175,18 @@ impl std::fmt::Display for LinesOfTextField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for LinesOfTextField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct MsgSeqNumField {
     pub fd: Field,
@@ -959,6 +1210,18 @@ impl MsgSeqNumField {
 impl std::fmt::Display for MsgSeqNumField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for MsgSeqNumField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -986,6 +1249,18 @@ impl std::fmt::Display for MsgTypeField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for MsgTypeField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct NewSeqNoField {
     pub fd: Field,
@@ -1009,6 +1284,18 @@ impl NewSeqNoField {
 impl std::fmt::Display for NewSeqNoField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for NewSeqNoField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -1036,6 +1323,18 @@ impl std::fmt::Display for OrderIDField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for OrderIDField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct OrderQtyField {
     pub fd: Field,
@@ -1059,6 +1358,18 @@ impl OrderQtyField {
 impl std::fmt::Display for OrderQtyField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for OrderQtyField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -1086,6 +1397,18 @@ impl std::fmt::Display for OrdStatusField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for OrdStatusField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Char(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct OrdTypeField {
     pub fd: Field,
@@ -1109,6 +1432,18 @@ impl OrdTypeField {
 impl std::fmt::Display for OrdTypeField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for OrdTypeField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Char(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -1136,6 +1471,18 @@ impl std::fmt::Display for OrigClOrdIDField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for OrigClOrdIDField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct PriceField {
     pub fd: Field,
@@ -1159,6 +1506,18 @@ impl PriceField {
 impl std::fmt::Display for PriceField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for PriceField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Decimal(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -1186,6 +1545,18 @@ impl std::fmt::Display for RefSeqNumField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for RefSeqNumField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct RelatdSymField {
     pub fd: Field,
@@ -1209,6 +1580,18 @@ impl RelatdSymField {
 impl std::fmt::Display for RelatdSymField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for RelatdSymField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -1236,6 +1619,18 @@ impl std::fmt::Display for Rule80AField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for Rule80AField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Char(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct SecurityIDField {
     pub fd: Field,
@@ -1259,6 +1654,18 @@ impl SecurityIDField {
 impl std::fmt::Display for SecurityIDField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for SecurityIDField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -1286,6 +1693,18 @@ impl std::fmt::Display for SenderCompIDField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for SenderCompIDField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct SenderSubIDField {
     pub fd: Field,
@@ -1309,6 +1728,18 @@ impl SenderSubIDField {
 impl std::fmt::Display for SenderSubIDField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for SenderSubIDField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -1336,6 +1767,18 @@ impl std::fmt::Display for SharesField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for SharesField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct SideField {
     pub fd: Field,
@@ -1359,6 +1802,18 @@ impl SideField {
 impl std::fmt::Display for SideField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for SideField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Char(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -1386,6 +1841,18 @@ impl std::fmt::Display for SymbolField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for SymbolField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct TargetCompIDField {
     pub fd: Field,
@@ -1409,6 +1876,18 @@ impl TargetCompIDField {
 impl std::fmt::Display for TargetCompIDField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for TargetCompIDField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -1436,6 +1915,18 @@ impl std::fmt::Display for TargetSubIDField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for TargetSubIDField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct TextField {
     pub fd: Field,
@@ -1459,6 +1950,18 @@ impl TextField {
 impl std::fmt::Display for TextField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for TextField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -1486,6 +1989,18 @@ impl std::fmt::Display for TimeInForceField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for TimeInForceField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Char(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct UrgencyField {
     pub fd: Field,
@@ -1509,6 +2024,18 @@ impl UrgencyField {
 impl std::fmt::Display for UrgencyField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for UrgencyField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Char(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -1536,6 +2063,18 @@ impl std::fmt::Display for SettlmntTypField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for SettlmntTypField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Char(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct SymbolSfxField {
     pub fd: Field,
@@ -1559,6 +2098,18 @@ impl SymbolSfxField {
 impl std::fmt::Display for SymbolSfxField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for SymbolSfxField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -1586,6 +2137,18 @@ impl std::fmt::Display for ListIDField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for ListIDField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct ListSeqNoField {
     pub fd: Field,
@@ -1609,6 +2172,18 @@ impl ListSeqNoField {
 impl std::fmt::Display for ListSeqNoField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for ListSeqNoField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -1636,6 +2211,18 @@ impl std::fmt::Display for TotNoOrdersField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for TotNoOrdersField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct ListExecInstField {
     pub fd: Field,
@@ -1659,6 +2246,18 @@ impl ListExecInstField {
 impl std::fmt::Display for ListExecInstField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for ListExecInstField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -1686,6 +2285,18 @@ impl std::fmt::Display for AllocIDField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for AllocIDField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct AllocTransTypeField {
     pub fd: Field,
@@ -1709,6 +2320,18 @@ impl AllocTransTypeField {
 impl std::fmt::Display for AllocTransTypeField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for AllocTransTypeField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Char(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -1736,6 +2359,18 @@ impl std::fmt::Display for RefAllocIDField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for RefAllocIDField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct NoOrdersField {
     pub fd: Field,
@@ -1759,6 +2394,18 @@ impl NoOrdersField {
 impl std::fmt::Display for NoOrdersField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for NoOrdersField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -1786,6 +2433,18 @@ impl std::fmt::Display for AvgPrxPrecisionField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for AvgPrxPrecisionField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct ExecBrokerField {
     pub fd: Field,
@@ -1809,6 +2468,18 @@ impl ExecBrokerField {
 impl std::fmt::Display for ExecBrokerField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for ExecBrokerField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -1836,6 +2507,18 @@ impl std::fmt::Display for OpenCloseField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for OpenCloseField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Char(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct NoAllocsField {
     pub fd: Field,
@@ -1859,6 +2542,18 @@ impl NoAllocsField {
 impl std::fmt::Display for NoAllocsField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for NoAllocsField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -1886,6 +2581,18 @@ impl std::fmt::Display for AllocAccountField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for AllocAccountField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct AllocSharesField {
     pub fd: Field,
@@ -1909,6 +2616,18 @@ impl AllocSharesField {
 impl std::fmt::Display for AllocSharesField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for AllocSharesField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -1936,6 +2655,18 @@ impl std::fmt::Display for ProcessCodeField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for ProcessCodeField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Char(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct NoRptsField {
     pub fd: Field,
@@ -1959,6 +2690,18 @@ impl NoRptsField {
 impl std::fmt::Display for NoRptsField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for NoRptsField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -1986,6 +2729,18 @@ impl std::fmt::Display for RptSeqField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for RptSeqField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct CxlQtyField {
     pub fd: Field,
@@ -2009,6 +2764,18 @@ impl CxlQtyField {
 impl std::fmt::Display for CxlQtyField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for CxlQtyField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -2036,6 +2803,18 @@ impl std::fmt::Display for NoDlvyInstField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for NoDlvyInstField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct DlvyInstField {
     pub fd: Field,
@@ -2059,6 +2838,18 @@ impl DlvyInstField {
 impl std::fmt::Display for DlvyInstField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for DlvyInstField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -2086,6 +2877,18 @@ impl std::fmt::Display for AllocStatusField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for AllocStatusField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct AllocRejCodeField {
     pub fd: Field,
@@ -2109,6 +2912,18 @@ impl AllocRejCodeField {
 impl std::fmt::Display for AllocRejCodeField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for AllocRejCodeField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -2136,6 +2951,18 @@ impl std::fmt::Display for BrokerOfCreditField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for BrokerOfCreditField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct EmailTypeField {
     pub fd: Field,
@@ -2159,6 +2986,18 @@ impl EmailTypeField {
 impl std::fmt::Display for EmailTypeField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for EmailTypeField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Char(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -2186,6 +3025,18 @@ impl std::fmt::Display for EncryptMethodField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for EncryptMethodField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct StopPxField {
     pub fd: Field,
@@ -2209,6 +3060,18 @@ impl StopPxField {
 impl std::fmt::Display for StopPxField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for StopPxField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Decimal(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -2236,6 +3099,18 @@ impl std::fmt::Display for CxlRejReasonField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for CxlRejReasonField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct OrdRejReasonField {
     pub fd: Field,
@@ -2259,6 +3134,18 @@ impl OrdRejReasonField {
 impl std::fmt::Display for OrdRejReasonField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for OrdRejReasonField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -2286,6 +3173,18 @@ impl std::fmt::Display for IOIQualifierField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for IOIQualifierField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Char(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct WaveNoField {
     pub fd: Field,
@@ -2309,6 +3208,18 @@ impl WaveNoField {
 impl std::fmt::Display for WaveNoField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for WaveNoField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -2336,6 +3247,18 @@ impl std::fmt::Display for IssuerField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for IssuerField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct SecurityDescField {
     pub fd: Field,
@@ -2359,6 +3282,18 @@ impl SecurityDescField {
 impl std::fmt::Display for SecurityDescField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for SecurityDescField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -2386,6 +3321,18 @@ impl std::fmt::Display for HeartBtIntField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for HeartBtIntField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct ClientIDField {
     pub fd: Field,
@@ -2409,6 +3356,18 @@ impl ClientIDField {
 impl std::fmt::Display for ClientIDField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for ClientIDField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -2436,6 +3395,18 @@ impl std::fmt::Display for MinQtyField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for MinQtyField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct MaxFloorField {
     pub fd: Field,
@@ -2459,6 +3430,18 @@ impl MaxFloorField {
 impl std::fmt::Display for MaxFloorField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for MaxFloorField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -2486,6 +3469,18 @@ impl std::fmt::Display for TestReqIDField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for TestReqIDField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct OnBehalfOfCompIDField {
     pub fd: Field,
@@ -2509,6 +3504,18 @@ impl OnBehalfOfCompIDField {
 impl std::fmt::Display for OnBehalfOfCompIDField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for OnBehalfOfCompIDField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -2536,6 +3543,18 @@ impl std::fmt::Display for OnBehalfOfSubIDField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for OnBehalfOfSubIDField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct QuoteIDField {
     pub fd: Field,
@@ -2559,6 +3578,18 @@ impl QuoteIDField {
 impl std::fmt::Display for QuoteIDField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for QuoteIDField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -2586,6 +3617,18 @@ impl std::fmt::Display for NetMoneyField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for NetMoneyField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct SettlCurrAmtField {
     pub fd: Field,
@@ -2609,6 +3652,18 @@ impl SettlCurrAmtField {
 impl std::fmt::Display for SettlCurrAmtField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for SettlCurrAmtField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -2636,6 +3691,18 @@ impl std::fmt::Display for SettlCurrencyField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for SettlCurrencyField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct NoExecsField {
     pub fd: Field,
@@ -2659,6 +3726,18 @@ impl NoExecsField {
 impl std::fmt::Display for NoExecsField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for NoExecsField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -2686,6 +3765,18 @@ impl std::fmt::Display for CxlTypeField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for CxlTypeField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Char(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct DKReasonField {
     pub fd: Field,
@@ -2709,6 +3800,18 @@ impl DKReasonField {
 impl std::fmt::Display for DKReasonField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for DKReasonField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Char(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -2736,6 +3839,18 @@ impl std::fmt::Display for DeliverToCompIDField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for DeliverToCompIDField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct DeliverToSubIDField {
     pub fd: Field,
@@ -2759,6 +3874,18 @@ impl DeliverToSubIDField {
 impl std::fmt::Display for DeliverToSubIDField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for DeliverToSubIDField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -2786,6 +3913,18 @@ impl std::fmt::Display for QuoteReqIDField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for QuoteReqIDField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct BidPxField {
     pub fd: Field,
@@ -2809,6 +3948,18 @@ impl BidPxField {
 impl std::fmt::Display for BidPxField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for BidPxField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Decimal(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -2836,6 +3987,18 @@ impl std::fmt::Display for OfferPxField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for OfferPxField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Decimal(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct BidSizeField {
     pub fd: Field,
@@ -2859,6 +4022,18 @@ impl BidSizeField {
 impl std::fmt::Display for BidSizeField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for BidSizeField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -2886,6 +4061,18 @@ impl std::fmt::Display for OfferSizeField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for OfferSizeField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct NoMiscFeesField {
     pub fd: Field,
@@ -2909,6 +4096,18 @@ impl NoMiscFeesField {
 impl std::fmt::Display for NoMiscFeesField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for NoMiscFeesField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -2936,6 +4135,18 @@ impl std::fmt::Display for MiscFeeAmtField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for MiscFeeAmtField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct MiscFeeCurrField {
     pub fd: Field,
@@ -2959,6 +4170,18 @@ impl MiscFeeCurrField {
 impl std::fmt::Display for MiscFeeCurrField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for MiscFeeCurrField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -2986,6 +4209,18 @@ impl std::fmt::Display for MiscFeeTypeField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for MiscFeeTypeField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Char(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct PrevClosePxField {
     pub fd: Field,
@@ -3009,6 +4244,18 @@ impl PrevClosePxField {
 impl std::fmt::Display for PrevClosePxField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for PrevClosePxField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Decimal(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -3036,6 +4283,18 @@ impl std::fmt::Display for SenderLocationIDField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for SenderLocationIDField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct TargetLocationIDField {
     pub fd: Field,
@@ -3059,6 +4318,18 @@ impl TargetLocationIDField {
 impl std::fmt::Display for TargetLocationIDField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for TargetLocationIDField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -3086,6 +4357,18 @@ impl std::fmt::Display for OnBehalfOfLocationIDField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for OnBehalfOfLocationIDField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct DeliverToLocationIDField {
     pub fd: Field,
@@ -3109,6 +4392,18 @@ impl DeliverToLocationIDField {
 impl std::fmt::Display for DeliverToLocationIDField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for DeliverToLocationIDField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -3136,6 +4431,18 @@ impl std::fmt::Display for NoRelatedSymField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for NoRelatedSymField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct SubjectField {
     pub fd: Field,
@@ -3159,6 +4466,18 @@ impl SubjectField {
 impl std::fmt::Display for SubjectField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for SubjectField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -3186,6 +4505,18 @@ impl std::fmt::Display for HeadlineField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for HeadlineField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct URLLinkField {
     pub fd: Field,
@@ -3209,6 +4540,18 @@ impl URLLinkField {
 impl std::fmt::Display for URLLinkField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for URLLinkField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -3236,6 +4579,18 @@ impl std::fmt::Display for ExecTypeField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for ExecTypeField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Char(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct LeavesQtyField {
     pub fd: Field,
@@ -3259,6 +4614,18 @@ impl LeavesQtyField {
 impl std::fmt::Display for LeavesQtyField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for LeavesQtyField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -3286,6 +4653,18 @@ impl std::fmt::Display for CashOrderQtyField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for CashOrderQtyField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct AllocAvgPxField {
     pub fd: Field,
@@ -3309,6 +4688,18 @@ impl AllocAvgPxField {
 impl std::fmt::Display for AllocAvgPxField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for AllocAvgPxField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Decimal(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -3336,6 +4727,18 @@ impl std::fmt::Display for AllocNetMoneyField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for AllocNetMoneyField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct SettlCurrFxRateCalcField {
     pub fd: Field,
@@ -3359,6 +4762,18 @@ impl SettlCurrFxRateCalcField {
 impl std::fmt::Display for SettlCurrFxRateCalcField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for SettlCurrFxRateCalcField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Char(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -3386,6 +4801,18 @@ impl std::fmt::Display for NumDaysInterestField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for NumDaysInterestField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct AccruedInterestAmtField {
     pub fd: Field,
@@ -3409,6 +4836,18 @@ impl AccruedInterestAmtField {
 impl std::fmt::Display for AccruedInterestAmtField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for AccruedInterestAmtField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -3436,6 +4875,18 @@ impl std::fmt::Display for SettlInstModeField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for SettlInstModeField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Char(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct AllocTextField {
     pub fd: Field,
@@ -3459,6 +4910,18 @@ impl AllocTextField {
 impl std::fmt::Display for AllocTextField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for AllocTextField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -3486,6 +4949,18 @@ impl std::fmt::Display for SettlInstIDField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for SettlInstIDField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct SettlInstTransTypeField {
     pub fd: Field,
@@ -3509,6 +4984,18 @@ impl SettlInstTransTypeField {
 impl std::fmt::Display for SettlInstTransTypeField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for SettlInstTransTypeField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Char(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -3536,6 +5023,18 @@ impl std::fmt::Display for EmailThreadIDField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for EmailThreadIDField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct SettlInstSourceField {
     pub fd: Field,
@@ -3559,6 +5058,18 @@ impl SettlInstSourceField {
 impl std::fmt::Display for SettlInstSourceField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for SettlInstSourceField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Char(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -3586,6 +5097,18 @@ impl std::fmt::Display for SettlLocationField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for SettlLocationField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct SecurityTypeField {
     pub fd: Field,
@@ -3609,6 +5132,18 @@ impl SecurityTypeField {
 impl std::fmt::Display for SecurityTypeField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for SecurityTypeField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -3636,6 +5171,18 @@ impl std::fmt::Display for StandInstDbTypeField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for StandInstDbTypeField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct StandInstDbNameField {
     pub fd: Field,
@@ -3659,6 +5206,18 @@ impl StandInstDbNameField {
 impl std::fmt::Display for StandInstDbNameField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for StandInstDbNameField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -3686,6 +5245,18 @@ impl std::fmt::Display for StandInstDbIDField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for StandInstDbIDField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct SettlDeliveryTypeField {
     pub fd: Field,
@@ -3709,6 +5280,18 @@ impl SettlDeliveryTypeField {
 impl std::fmt::Display for SettlDeliveryTypeField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for SettlDeliveryTypeField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -3736,6 +5319,18 @@ impl std::fmt::Display for SettlDepositoryCodeField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for SettlDepositoryCodeField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct SettlBrkrCodeField {
     pub fd: Field,
@@ -3759,6 +5354,18 @@ impl SettlBrkrCodeField {
 impl std::fmt::Display for SettlBrkrCodeField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for SettlBrkrCodeField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -3786,6 +5393,18 @@ impl std::fmt::Display for SettlInstCodeField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for SettlInstCodeField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct SecuritySettlAgentNameField {
     pub fd: Field,
@@ -3809,6 +5428,18 @@ impl SecuritySettlAgentNameField {
 impl std::fmt::Display for SecuritySettlAgentNameField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for SecuritySettlAgentNameField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -3836,6 +5467,18 @@ impl std::fmt::Display for SecuritySettlAgentCodeField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for SecuritySettlAgentCodeField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct SecuritySettlAgentAcctNumField {
     pub fd: Field,
@@ -3859,6 +5502,18 @@ impl SecuritySettlAgentAcctNumField {
 impl std::fmt::Display for SecuritySettlAgentAcctNumField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for SecuritySettlAgentAcctNumField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -3886,6 +5541,18 @@ impl std::fmt::Display for SecuritySettlAgentAcctNameField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for SecuritySettlAgentAcctNameField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct SecuritySettlAgentContactNameField {
     pub fd: Field,
@@ -3909,6 +5576,18 @@ impl SecuritySettlAgentContactNameField {
 impl std::fmt::Display for SecuritySettlAgentContactNameField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for SecuritySettlAgentContactNameField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -3936,6 +5615,18 @@ impl std::fmt::Display for SecuritySettlAgentContactPhoneField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for SecuritySettlAgentContactPhoneField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct CashSettlAgentNameField {
     pub fd: Field,
@@ -3959,6 +5650,18 @@ impl CashSettlAgentNameField {
 impl std::fmt::Display for CashSettlAgentNameField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for CashSettlAgentNameField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -3986,6 +5689,18 @@ impl std::fmt::Display for CashSettlAgentCodeField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for CashSettlAgentCodeField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct CashSettlAgentAcctNumField {
     pub fd: Field,
@@ -4009,6 +5724,18 @@ impl CashSettlAgentAcctNumField {
 impl std::fmt::Display for CashSettlAgentAcctNumField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for CashSettlAgentAcctNumField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -4036,6 +5763,18 @@ impl std::fmt::Display for CashSettlAgentAcctNameField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for CashSettlAgentAcctNameField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct CashSettlAgentContactNameField {
     pub fd: Field,
@@ -4059,6 +5798,18 @@ impl CashSettlAgentContactNameField {
 impl std::fmt::Display for CashSettlAgentContactNameField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for CashSettlAgentContactNameField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -4086,6 +5837,18 @@ impl std::fmt::Display for CashSettlAgentContactPhoneField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for CashSettlAgentContactPhoneField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct BidSpotRateField {
     pub fd: Field,
@@ -4109,6 +5872,18 @@ impl BidSpotRateField {
 impl std::fmt::Display for BidSpotRateField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for BidSpotRateField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Decimal(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -4136,6 +5911,18 @@ impl std::fmt::Display for OfferSpotRateField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for OfferSpotRateField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Decimal(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct OrderQty2Field {
     pub fd: Field,
@@ -4159,6 +5946,18 @@ impl OrderQty2Field {
 impl std::fmt::Display for OrderQty2Field {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for OrderQty2Field {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -4186,6 +5985,18 @@ impl std::fmt::Display for LastSpotRateField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for LastSpotRateField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Decimal(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct AllocLinkIDField {
     pub fd: Field,
@@ -4209,6 +6020,18 @@ impl AllocLinkIDField {
 impl std::fmt::Display for AllocLinkIDField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for AllocLinkIDField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -4236,6 +6059,18 @@ impl std::fmt::Display for AllocLinkTypeField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for AllocLinkTypeField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct SecondaryOrderIDField {
     pub fd: Field,
@@ -4259,6 +6094,18 @@ impl SecondaryOrderIDField {
 impl std::fmt::Display for SecondaryOrderIDField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for SecondaryOrderIDField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -4286,6 +6133,18 @@ impl std::fmt::Display for NoIOIQualifiersField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for NoIOIQualifiersField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct PutOrCallField {
     pub fd: Field,
@@ -4309,6 +6168,18 @@ impl PutOrCallField {
 impl std::fmt::Display for PutOrCallField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for PutOrCallField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -4336,6 +6207,18 @@ impl std::fmt::Display for StrikePriceField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for StrikePriceField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Decimal(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct CoveredOrUncoveredField {
     pub fd: Field,
@@ -4359,6 +6242,18 @@ impl CoveredOrUncoveredField {
 impl std::fmt::Display for CoveredOrUncoveredField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for CoveredOrUncoveredField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -4386,6 +6281,18 @@ impl std::fmt::Display for CustomerOrFirmField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for CustomerOrFirmField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct OptAttributeField {
     pub fd: Field,
@@ -4409,6 +6316,18 @@ impl OptAttributeField {
 impl std::fmt::Display for OptAttributeField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for OptAttributeField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Char(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -4436,6 +6355,18 @@ impl std::fmt::Display for AllocHandlInstField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for AllocHandlInstField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct MaxShowField {
     pub fd: Field,
@@ -4459,6 +6390,18 @@ impl MaxShowField {
 impl std::fmt::Display for MaxShowField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for MaxShowField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -4486,6 +6429,18 @@ impl std::fmt::Display for SettlInstRefIDField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for SettlInstRefIDField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct NoRoutingIDsField {
     pub fd: Field,
@@ -4509,6 +6464,18 @@ impl NoRoutingIDsField {
 impl std::fmt::Display for NoRoutingIDsField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for NoRoutingIDsField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -4536,6 +6503,18 @@ impl std::fmt::Display for RoutingTypeField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for RoutingTypeField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct RoutingIDField {
     pub fd: Field,
@@ -4559,6 +6538,18 @@ impl RoutingIDField {
 impl std::fmt::Display for RoutingIDField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for RoutingIDField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -4586,6 +6577,18 @@ impl std::fmt::Display for BenchmarkField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for BenchmarkField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Char(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct MDReqIDField {
     pub fd: Field,
@@ -4609,6 +6612,18 @@ impl MDReqIDField {
 impl std::fmt::Display for MDReqIDField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for MDReqIDField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -4636,6 +6651,18 @@ impl std::fmt::Display for SubscriptionRequestTypeField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for SubscriptionRequestTypeField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Char(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct MarketDepthField {
     pub fd: Field,
@@ -4659,6 +6686,18 @@ impl MarketDepthField {
 impl std::fmt::Display for MarketDepthField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for MarketDepthField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -4686,6 +6725,18 @@ impl std::fmt::Display for MDUpdateTypeField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for MDUpdateTypeField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct NoMDEntryTypesField {
     pub fd: Field,
@@ -4709,6 +6760,18 @@ impl NoMDEntryTypesField {
 impl std::fmt::Display for NoMDEntryTypesField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for NoMDEntryTypesField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -4736,6 +6799,18 @@ impl std::fmt::Display for NoMDEntriesField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for NoMDEntriesField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct MDEntryTypeField {
     pub fd: Field,
@@ -4759,6 +6834,18 @@ impl MDEntryTypeField {
 impl std::fmt::Display for MDEntryTypeField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for MDEntryTypeField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Char(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -4786,6 +6873,18 @@ impl std::fmt::Display for MDEntryPxField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for MDEntryPxField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Decimal(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct MDEntrySizeField {
     pub fd: Field,
@@ -4809,6 +6908,18 @@ impl MDEntrySizeField {
 impl std::fmt::Display for MDEntrySizeField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for MDEntrySizeField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -4836,6 +6947,18 @@ impl std::fmt::Display for TickDirectionField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for TickDirectionField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Char(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct MDEntryIDField {
     pub fd: Field,
@@ -4859,6 +6982,18 @@ impl MDEntryIDField {
 impl std::fmt::Display for MDEntryIDField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for MDEntryIDField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -4886,6 +7021,18 @@ impl std::fmt::Display for MDUpdateActionField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for MDUpdateActionField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Char(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct MDEntryRefIDField {
     pub fd: Field,
@@ -4909,6 +7056,18 @@ impl MDEntryRefIDField {
 impl std::fmt::Display for MDEntryRefIDField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for MDEntryRefIDField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -4936,6 +7095,18 @@ impl std::fmt::Display for MDReqRejReasonField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for MDReqRejReasonField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Char(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct MDEntryOriginatorField {
     pub fd: Field,
@@ -4959,6 +7130,18 @@ impl MDEntryOriginatorField {
 impl std::fmt::Display for MDEntryOriginatorField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for MDEntryOriginatorField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -4986,6 +7169,18 @@ impl std::fmt::Display for LocationIDField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for LocationIDField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct DeskIDField {
     pub fd: Field,
@@ -5009,6 +7204,18 @@ impl DeskIDField {
 impl std::fmt::Display for DeskIDField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for DeskIDField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -5036,6 +7243,18 @@ impl std::fmt::Display for DeleteReasonField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for DeleteReasonField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Char(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct OpenCloseSettleFlagField {
     pub fd: Field,
@@ -5059,6 +7278,18 @@ impl OpenCloseSettleFlagField {
 impl std::fmt::Display for OpenCloseSettleFlagField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for OpenCloseSettleFlagField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Char(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -5086,6 +7317,18 @@ impl std::fmt::Display for SellerDaysField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for SellerDaysField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct MDEntryBuyerField {
     pub fd: Field,
@@ -5109,6 +7352,18 @@ impl MDEntryBuyerField {
 impl std::fmt::Display for MDEntryBuyerField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for MDEntryBuyerField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -5136,6 +7391,18 @@ impl std::fmt::Display for MDEntrySellerField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for MDEntrySellerField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct MDEntryPositionNoField {
     pub fd: Field,
@@ -5159,6 +7426,18 @@ impl MDEntryPositionNoField {
 impl std::fmt::Display for MDEntryPositionNoField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for MDEntryPositionNoField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -5186,6 +7465,18 @@ impl std::fmt::Display for FinancialStatusField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for FinancialStatusField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Char(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct CorporateActionField {
     pub fd: Field,
@@ -5209,6 +7500,18 @@ impl CorporateActionField {
 impl std::fmt::Display for CorporateActionField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for CorporateActionField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Char(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -5236,6 +7539,18 @@ impl std::fmt::Display for DefBidSizeField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for DefBidSizeField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct DefOfferSizeField {
     pub fd: Field,
@@ -5259,6 +7574,18 @@ impl DefOfferSizeField {
 impl std::fmt::Display for DefOfferSizeField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for DefOfferSizeField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -5286,6 +7613,18 @@ impl std::fmt::Display for NoQuoteEntriesField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for NoQuoteEntriesField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct NoQuoteSetsField {
     pub fd: Field,
@@ -5309,6 +7648,18 @@ impl NoQuoteSetsField {
 impl std::fmt::Display for NoQuoteSetsField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for NoQuoteSetsField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -5336,6 +7687,18 @@ impl std::fmt::Display for QuoteAckStatusField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for QuoteAckStatusField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct QuoteCancelTypeField {
     pub fd: Field,
@@ -5359,6 +7722,18 @@ impl QuoteCancelTypeField {
 impl std::fmt::Display for QuoteCancelTypeField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for QuoteCancelTypeField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -5386,6 +7761,18 @@ impl std::fmt::Display for QuoteEntryIDField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for QuoteEntryIDField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct QuoteRejectReasonField {
     pub fd: Field,
@@ -5409,6 +7796,18 @@ impl QuoteRejectReasonField {
 impl std::fmt::Display for QuoteRejectReasonField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for QuoteRejectReasonField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -5436,6 +7835,18 @@ impl std::fmt::Display for QuoteResponseLevelField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for QuoteResponseLevelField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct QuoteSetIDField {
     pub fd: Field,
@@ -5459,6 +7870,18 @@ impl QuoteSetIDField {
 impl std::fmt::Display for QuoteSetIDField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for QuoteSetIDField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -5486,6 +7909,18 @@ impl std::fmt::Display for QuoteRequestTypeField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for QuoteRequestTypeField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct TotQuoteEntriesField {
     pub fd: Field,
@@ -5509,6 +7944,18 @@ impl TotQuoteEntriesField {
 impl std::fmt::Display for TotQuoteEntriesField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for TotQuoteEntriesField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -5536,6 +7983,18 @@ impl std::fmt::Display for UnderlyingIDSourceField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for UnderlyingIDSourceField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct UnderlyingIssuerField {
     pub fd: Field,
@@ -5559,6 +8018,18 @@ impl UnderlyingIssuerField {
 impl std::fmt::Display for UnderlyingIssuerField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for UnderlyingIssuerField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -5586,6 +8057,18 @@ impl std::fmt::Display for UnderlyingSecurityDescField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for UnderlyingSecurityDescField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct UnderlyingSecurityIDField {
     pub fd: Field,
@@ -5609,6 +8092,18 @@ impl UnderlyingSecurityIDField {
 impl std::fmt::Display for UnderlyingSecurityIDField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for UnderlyingSecurityIDField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -5636,6 +8131,18 @@ impl std::fmt::Display for UnderlyingSecurityTypeField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for UnderlyingSecurityTypeField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct UnderlyingSymbolField {
     pub fd: Field,
@@ -5659,6 +8166,18 @@ impl UnderlyingSymbolField {
 impl std::fmt::Display for UnderlyingSymbolField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for UnderlyingSymbolField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -5686,6 +8205,18 @@ impl std::fmt::Display for UnderlyingSymbolSfxField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for UnderlyingSymbolSfxField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct UnderlyingPutOrCallField {
     pub fd: Field,
@@ -5709,6 +8240,18 @@ impl UnderlyingPutOrCallField {
 impl std::fmt::Display for UnderlyingPutOrCallField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for UnderlyingPutOrCallField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -5736,6 +8279,18 @@ impl std::fmt::Display for UnderlyingStrikePriceField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for UnderlyingStrikePriceField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Decimal(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct UnderlyingOptAttributeField {
     pub fd: Field,
@@ -5759,6 +8314,18 @@ impl UnderlyingOptAttributeField {
 impl std::fmt::Display for UnderlyingOptAttributeField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for UnderlyingOptAttributeField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Char(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -5786,6 +8353,18 @@ impl std::fmt::Display for UnderlyingCurrencyField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for UnderlyingCurrencyField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct RatioQtyField {
     pub fd: Field,
@@ -5809,6 +8388,18 @@ impl RatioQtyField {
 impl std::fmt::Display for RatioQtyField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for RatioQtyField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -5836,6 +8427,18 @@ impl std::fmt::Display for SecurityReqIDField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for SecurityReqIDField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct SecurityRequestTypeField {
     pub fd: Field,
@@ -5859,6 +8462,18 @@ impl SecurityRequestTypeField {
 impl std::fmt::Display for SecurityRequestTypeField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for SecurityRequestTypeField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -5886,6 +8501,18 @@ impl std::fmt::Display for SecurityResponseIDField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for SecurityResponseIDField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct SecurityResponseTypeField {
     pub fd: Field,
@@ -5909,6 +8536,18 @@ impl SecurityResponseTypeField {
 impl std::fmt::Display for SecurityResponseTypeField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for SecurityResponseTypeField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -5936,6 +8575,18 @@ impl std::fmt::Display for SecurityStatusReqIDField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for SecurityStatusReqIDField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct SecurityTradingStatusField {
     pub fd: Field,
@@ -5959,6 +8610,18 @@ impl SecurityTradingStatusField {
 impl std::fmt::Display for SecurityTradingStatusField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for SecurityTradingStatusField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -5986,6 +8649,18 @@ impl std::fmt::Display for HaltReasonCharField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for HaltReasonCharField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Char(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct BuyVolumeField {
     pub fd: Field,
@@ -6009,6 +8684,18 @@ impl BuyVolumeField {
 impl std::fmt::Display for BuyVolumeField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for BuyVolumeField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -6036,6 +8723,18 @@ impl std::fmt::Display for SellVolumeField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for SellVolumeField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct HighPxField {
     pub fd: Field,
@@ -6059,6 +8758,18 @@ impl HighPxField {
 impl std::fmt::Display for HighPxField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for HighPxField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Decimal(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -6086,6 +8797,18 @@ impl std::fmt::Display for LowPxField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for LowPxField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Decimal(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct AdjustmentField {
     pub fd: Field,
@@ -6109,6 +8832,18 @@ impl AdjustmentField {
 impl std::fmt::Display for AdjustmentField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for AdjustmentField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -6136,6 +8871,18 @@ impl std::fmt::Display for TradSesReqIDField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for TradSesReqIDField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct TradingSessionIDField {
     pub fd: Field,
@@ -6159,6 +8906,18 @@ impl TradingSessionIDField {
 impl std::fmt::Display for TradingSessionIDField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for TradingSessionIDField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -6186,6 +8945,18 @@ impl std::fmt::Display for ContraTraderField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for ContraTraderField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct TradSesMethodField {
     pub fd: Field,
@@ -6209,6 +8980,18 @@ impl TradSesMethodField {
 impl std::fmt::Display for TradSesMethodField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for TradSesMethodField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -6236,6 +9019,18 @@ impl std::fmt::Display for TradSesModeField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for TradSesModeField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct TradSesStatusField {
     pub fd: Field,
@@ -6259,6 +9054,18 @@ impl TradSesStatusField {
 impl std::fmt::Display for TradSesStatusField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for TradSesStatusField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -6286,6 +9093,18 @@ impl std::fmt::Display for NumberOfOrdersField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for NumberOfOrdersField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct MessageEncodingField {
     pub fd: Field,
@@ -6309,6 +9128,18 @@ impl MessageEncodingField {
 impl std::fmt::Display for MessageEncodingField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for MessageEncodingField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -6336,6 +9167,18 @@ impl std::fmt::Display for AllocPriceField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for AllocPriceField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Decimal(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct QuoteEntryRejectReasonField {
     pub fd: Field,
@@ -6359,6 +9202,18 @@ impl QuoteEntryRejectReasonField {
 impl std::fmt::Display for QuoteEntryRejectReasonField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for QuoteEntryRejectReasonField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -6386,6 +9241,18 @@ impl std::fmt::Display for LastMsgSeqNumProcessedField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for LastMsgSeqNumProcessedField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct RefTagIDField {
     pub fd: Field,
@@ -6409,6 +9276,18 @@ impl RefTagIDField {
 impl std::fmt::Display for RefTagIDField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for RefTagIDField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -6436,6 +9315,18 @@ impl std::fmt::Display for RefMsgTypeField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for RefMsgTypeField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct SessionRejectReasonField {
     pub fd: Field,
@@ -6459,6 +9350,18 @@ impl SessionRejectReasonField {
 impl std::fmt::Display for SessionRejectReasonField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for SessionRejectReasonField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -6486,6 +9389,18 @@ impl std::fmt::Display for BidRequestTransTypeField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for BidRequestTransTypeField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Char(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct ContraBrokerField {
     pub fd: Field,
@@ -6509,6 +9424,18 @@ impl ContraBrokerField {
 impl std::fmt::Display for ContraBrokerField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for ContraBrokerField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -6536,6 +9463,18 @@ impl std::fmt::Display for ComplianceIDField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for ComplianceIDField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct ExecRestatementReasonField {
     pub fd: Field,
@@ -6559,6 +9498,18 @@ impl ExecRestatementReasonField {
 impl std::fmt::Display for ExecRestatementReasonField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for ExecRestatementReasonField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -6586,6 +9537,18 @@ impl std::fmt::Display for BusinessRejectRefIDField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for BusinessRejectRefIDField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct BusinessRejectReasonField {
     pub fd: Field,
@@ -6609,6 +9572,18 @@ impl BusinessRejectReasonField {
 impl std::fmt::Display for BusinessRejectReasonField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for BusinessRejectReasonField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -6636,6 +9611,18 @@ impl std::fmt::Display for GrossTradeAmtField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for GrossTradeAmtField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct NoContraBrokersField {
     pub fd: Field,
@@ -6659,6 +9646,18 @@ impl NoContraBrokersField {
 impl std::fmt::Display for NoContraBrokersField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for NoContraBrokersField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -6686,6 +9685,18 @@ impl std::fmt::Display for MaxMessageSizeField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for MaxMessageSizeField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct NoMsgTypesField {
     pub fd: Field,
@@ -6709,6 +9720,18 @@ impl NoMsgTypesField {
 impl std::fmt::Display for NoMsgTypesField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for NoMsgTypesField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -6736,6 +9759,18 @@ impl std::fmt::Display for MsgDirectionField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for MsgDirectionField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Char(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct NoTradingSessionsField {
     pub fd: Field,
@@ -6759,6 +9794,18 @@ impl NoTradingSessionsField {
 impl std::fmt::Display for NoTradingSessionsField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for NoTradingSessionsField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -6786,6 +9833,18 @@ impl std::fmt::Display for TotalVolumeTradedField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for TotalVolumeTradedField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct DiscretionInstField {
     pub fd: Field,
@@ -6809,6 +9868,18 @@ impl DiscretionInstField {
 impl std::fmt::Display for DiscretionInstField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for DiscretionInstField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Char(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -6836,6 +9907,18 @@ impl std::fmt::Display for BidIDField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for BidIDField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct ClientBidIDField {
     pub fd: Field,
@@ -6859,6 +9942,18 @@ impl ClientBidIDField {
 impl std::fmt::Display for ClientBidIDField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for ClientBidIDField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -6886,6 +9981,18 @@ impl std::fmt::Display for ListNameField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for ListNameField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct TotalNumSecuritiesField {
     pub fd: Field,
@@ -6909,6 +10016,18 @@ impl TotalNumSecuritiesField {
 impl std::fmt::Display for TotalNumSecuritiesField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for TotalNumSecuritiesField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -6936,6 +10055,18 @@ impl std::fmt::Display for BidTypeField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for BidTypeField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct NumTicketsField {
     pub fd: Field,
@@ -6959,6 +10090,18 @@ impl NumTicketsField {
 impl std::fmt::Display for NumTicketsField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for NumTicketsField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -6986,6 +10129,18 @@ impl std::fmt::Display for SideValue1Field {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for SideValue1Field {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct SideValue2Field {
     pub fd: Field,
@@ -7009,6 +10164,18 @@ impl SideValue2Field {
 impl std::fmt::Display for SideValue2Field {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for SideValue2Field {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -7036,6 +10203,18 @@ impl std::fmt::Display for NoBidDescriptorsField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for NoBidDescriptorsField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct BidDescriptorTypeField {
     pub fd: Field,
@@ -7059,6 +10238,18 @@ impl BidDescriptorTypeField {
 impl std::fmt::Display for BidDescriptorTypeField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for BidDescriptorTypeField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -7086,6 +10277,18 @@ impl std::fmt::Display for BidDescriptorField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for BidDescriptorField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct SideValueIndField {
     pub fd: Field,
@@ -7109,6 +10312,18 @@ impl SideValueIndField {
 impl std::fmt::Display for SideValueIndField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for SideValueIndField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -7136,6 +10351,18 @@ impl std::fmt::Display for LiquidityValueField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for LiquidityValueField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct FairValueField {
     pub fd: Field,
@@ -7159,6 +10386,18 @@ impl FairValueField {
 impl std::fmt::Display for FairValueField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for FairValueField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -7186,6 +10425,18 @@ impl std::fmt::Display for ValueOfFuturesField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for ValueOfFuturesField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct LiquidityIndTypeField {
     pub fd: Field,
@@ -7209,6 +10460,18 @@ impl LiquidityIndTypeField {
 impl std::fmt::Display for LiquidityIndTypeField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for LiquidityIndTypeField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -7236,6 +10499,18 @@ impl std::fmt::Display for OutMainCntryUIndexField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for OutMainCntryUIndexField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct ProgRptReqsField {
     pub fd: Field,
@@ -7259,6 +10534,18 @@ impl ProgRptReqsField {
 impl std::fmt::Display for ProgRptReqsField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for ProgRptReqsField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -7286,6 +10573,18 @@ impl std::fmt::Display for ProgPeriodIntervalField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for ProgPeriodIntervalField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct IncTaxIndField {
     pub fd: Field,
@@ -7309,6 +10608,18 @@ impl IncTaxIndField {
 impl std::fmt::Display for IncTaxIndField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for IncTaxIndField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -7336,6 +10647,18 @@ impl std::fmt::Display for NumBiddersField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for NumBiddersField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct TradeTypeField {
     pub fd: Field,
@@ -7359,6 +10682,18 @@ impl TradeTypeField {
 impl std::fmt::Display for TradeTypeField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for TradeTypeField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Char(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -7386,6 +10721,18 @@ impl std::fmt::Display for BasisPxTypeField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for BasisPxTypeField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Char(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct NoBidComponentsField {
     pub fd: Field,
@@ -7409,6 +10756,18 @@ impl NoBidComponentsField {
 impl std::fmt::Display for NoBidComponentsField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for NoBidComponentsField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -7436,6 +10795,18 @@ impl std::fmt::Display for CountryField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for CountryField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct TotNoStrikesField {
     pub fd: Field,
@@ -7459,6 +10830,18 @@ impl TotNoStrikesField {
 impl std::fmt::Display for TotNoStrikesField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for TotNoStrikesField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -7486,6 +10869,18 @@ impl std::fmt::Display for PriceTypeField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for PriceTypeField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct DayOrderQtyField {
     pub fd: Field,
@@ -7509,6 +10904,18 @@ impl DayOrderQtyField {
 impl std::fmt::Display for DayOrderQtyField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for DayOrderQtyField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -7536,6 +10943,18 @@ impl std::fmt::Display for DayCumQtyField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for DayCumQtyField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct DayAvgPxField {
     pub fd: Field,
@@ -7559,6 +10978,18 @@ impl DayAvgPxField {
 impl std::fmt::Display for DayAvgPxField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for DayAvgPxField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Decimal(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -7586,6 +11017,18 @@ impl std::fmt::Display for GTBookingInstField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for GTBookingInstField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct NoStrikesField {
     pub fd: Field,
@@ -7609,6 +11052,18 @@ impl NoStrikesField {
 impl std::fmt::Display for NoStrikesField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for NoStrikesField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -7636,6 +11091,18 @@ impl std::fmt::Display for ListStatusTypeField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for ListStatusTypeField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct NetGrossIndField {
     pub fd: Field,
@@ -7659,6 +11126,18 @@ impl NetGrossIndField {
 impl std::fmt::Display for NetGrossIndField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for NetGrossIndField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -7686,6 +11165,18 @@ impl std::fmt::Display for ListOrderStatusField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for ListOrderStatusField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct ListExecInstTypeField {
     pub fd: Field,
@@ -7709,6 +11200,18 @@ impl ListExecInstTypeField {
 impl std::fmt::Display for ListExecInstTypeField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for ListExecInstTypeField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Char(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -7736,6 +11239,18 @@ impl std::fmt::Display for CxlRejResponseToField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for CxlRejResponseToField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Char(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct ContraTradeQtyField {
     pub fd: Field,
@@ -7759,6 +11274,18 @@ impl ContraTradeQtyField {
 impl std::fmt::Display for ContraTradeQtyField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for ContraTradeQtyField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -7786,6 +11313,18 @@ impl std::fmt::Display for ClearingFirmField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for ClearingFirmField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct ClearingAccountField {
     pub fd: Field,
@@ -7809,6 +11348,18 @@ impl ClearingAccountField {
 impl std::fmt::Display for ClearingAccountField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for ClearingAccountField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -7836,6 +11387,18 @@ impl std::fmt::Display for LiquidityNumSecuritiesField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
+impl TryFrom<&Field> for LiquidityNumSecuritiesField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Int(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
+    }
+}
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct MultiLegReportingTypeField {
     pub fd: Field,
@@ -7859,6 +11422,18 @@ impl MultiLegReportingTypeField {
 impl std::fmt::Display for MultiLegReportingTypeField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}={}|", Self::tag(), self.value())
+    }
+}
+impl TryFrom<&Field> for MultiLegReportingTypeField {
+    type Error = UnknownMsgTypeError;
+
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::Char(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
+            }),
+        }
     }
 }
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -7886,141 +11461,15 @@ impl std::fmt::Display for ListStatusTextField {
         write!(f, "{}={}|", Self::tag(), self.value())
     }
 }
-pub struct StringField {
-    tag: u16,
-    fd: Field,
-}
+impl TryFrom<&Field> for ListStatusTextField {
+    type Error = UnknownMsgTypeError;
 
-impl StringField {
-    const fn tag(&self) -> u16 {
-        self.tag
-    }
-
-    fn value(&self) -> &str {
-        match &self.fd {
-            Field::String(_, v) => v,
-            _ => panic!(""),
-        }
-    }
-}
-
-impl std::fmt::Display for StringField {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}={}|", self.tag(), self.value())
-    }
-}
-pub struct CharField {
-    tag: u16,
-    fd: Field,
-}
-
-impl CharField {
-    const fn tag(&self) -> u16 {
-        self.tag
-    }
-
-    fn value(&self) -> char {
-        match &self.fd {
-            Field::Char(_, v) => *v,
-            _ => panic!(""),
-        }
-    }
-}
-
-impl std::fmt::Display for CharField {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}={}|", self.tag(), self.value())
-    }
-}
-pub struct DecimalField {
-    tag: u16,
-    fd: Field,
-}
-
-impl DecimalField {
-    const fn tag(&self) -> u16 {
-        self.tag
-    }
-
-    fn value(&self) -> Decimal {
-        match &self.fd {
-            Field::Decimal(_, v) => *v,
-            _ => panic!(""),
-        }
-    }
-}
-
-impl std::fmt::Display for DecimalField {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}={}|", self.tag(), self.value())
-    }
-}
-pub struct IntField {
-    tag: u16,
-    fd: Field,
-}
-
-impl IntField {
-    const fn tag(&self) -> u16 {
-        self.tag
-    }
-
-    fn value(&self) -> i32 {
-        match &self.fd {
-            Field::Int(_, v) => *v,
-            _ => panic!(""),
-        }
-    }
-}
-
-impl std::fmt::Display for IntField {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}={}|", self.tag(), self.value())
-    }
-}
-impl FieldSet {
-    /// for use by custom fields
-    pub fn get_str_field(&self, tag: u16) -> Result<StringField, FieldTypeMismatchError> {
-        let f = self.iter().find_or_first(|p| p.tag() == tag).unwrap();
-        match f {
-            Field::String(t, v) => Ok(StringField {
-                tag: *t,
-                fd: Field::String(*t, v.to_string()),
+    fn try_from(value: &Field) -> Result<Self, Self::Error> {
+        match value {
+            Field::String(_, _) => Ok(Self { fd: value.clone() }),
+            _ => Err(UnknownMsgTypeError {
+                val: value.to_string(),
             }),
-            _ => Err(FieldTypeMismatchError {}),
-        }
-    }
-    /// for use by custom fields
-    pub fn get_char_field(&self, tag: u16) -> Result<CharField, FieldTypeMismatchError> {
-        let f = self.iter().find_or_first(|p| p.tag() == tag).unwrap();
-        match f {
-            Field::Char(t, v) => Ok(CharField {
-                tag: *t,
-                fd: Field::Char(*t, *v),
-            }),
-            _ => Err(FieldTypeMismatchError {}),
-        }
-    }
-    /// for use by custom fields
-    pub fn get_decimal_field(&self, tag: u16) -> Result<DecimalField, FieldTypeMismatchError> {
-        let f = self.iter().find_or_first(|p| p.tag() == tag).unwrap();
-        match f {
-            Field::Decimal(t, v) => Ok(DecimalField {
-                tag: *t,
-                fd: Field::Decimal(*t, *v),
-            }),
-            _ => Err(FieldTypeMismatchError {}),
-        }
-    }
-    /// for use by custom fields
-    pub fn get_i32_field(&self, tag: u16) -> Result<IntField, FieldTypeMismatchError> {
-        let f = self.iter().find_or_first(|p| p.tag() == tag).unwrap();
-        match f {
-            Field::Int(t, v) => Ok(IntField {
-                tag: *t,
-                fd: Field::Int(*t, *v),
-            }),
-            _ => Err(FieldTypeMismatchError {}),
         }
     }
 }

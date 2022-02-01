@@ -2,8 +2,9 @@ use bytes::Bytes;
 
 use crate::application::FixApp;
 use crate::model::field::FieldSet;
-use crate::model::generated::generated::Field;
+use crate::model::generated::fields::Field;
 use crate::model::message::Message;
+use crate::model::BeginString;
 
 struct Cracker<'a> {
     app: Box<dyn FixApp + 'a>,
@@ -13,10 +14,17 @@ struct Cracker<'a> {
 impl Cracker<'_> {
     pub fn crack(&mut self, msg: &Bytes) {
         let msg_string = String::from_utf8_lossy(msg.as_ref()).to_string();
+
+        let m = msg_string.clone();
+        let bs: BeginString = BeginString::Fix42; //m.into();
+
         let fields: Vec<Field> = msg_string
             .split('\x01')
+            // .filter(|p| p.len() == 2)
             .into_iter()
-            .map(|s| Field::try_from(s.to_string()))
+            // .map(|s| Field::cra ::try_from(s.to_string()))
+            .filter(|p| !p.is_empty())
+            .map(|s| Field::crack(bs, s))
             .filter_map(|s| match s {
                 Ok(o) => Some(o),
                 Err(_) => None,
@@ -58,7 +66,7 @@ mod tests {
     #[test]
     fn basic_cracker() {
         // build up a FIX message, that we 'received'
-        let fields = vec!["35=A", "58=Test", "38=123"];
+        let fields = vec!["8=FIX.4.2", "35=A", "58=Test", "38=123"];
         let mut buf = BytesMut::with_capacity(1024);
         for field in fields {
             buf.put_slice(field.as_bytes());

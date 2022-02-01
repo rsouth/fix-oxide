@@ -2,7 +2,7 @@ use std::fmt;
 use std::fmt::Formatter;
 
 use crate::model::field::{FieldSet, NoSuchField};
-use crate::model::generated::generated::{Field, MsgTypeField};
+use crate::model::generated::fields::Field;
 use crate::model::message_type::UnknownMsgTypeError;
 
 #[derive(Default, Debug)]
@@ -12,18 +12,23 @@ pub struct Message {
     trailer: FieldSet,
 }
 
-impl TryFrom<&Field> for MsgTypeField {
-    type Error = UnknownMsgTypeError;
-
-    fn try_from(value: &Field) -> Result<Self, Self::Error> {
-        match value {
-            Field::String(_, _) => Ok(Self { fd: value.clone() }),
-            _ => Err(UnknownMsgTypeError {
-                val: value.to_string(),
-            }),
-        }
-    }
-}
+// todo LOOK BELOW
+// todo LOOK BELOW
+// todo move this to generated field types... <<<<<< --------
+// todo LOOK BELOW
+// todo LOOK BELOW
+// impl TryFrom<&Field> for MsgTypeField {
+//     type Error = UnknownMsgTypeError;
+//
+//     fn try_from(value: &Field) -> Result<Self, Self::Error> {
+//         match value {
+//             Field::String(_, _) => Ok(Self { fd: value.clone() }),
+//             _ => Err(UnknownMsgTypeError {
+//                 val: value.to_string(),
+//             }),
+//         }
+//     }
+// }
 
 impl From<NoSuchField> for UnknownMsgTypeError {
     fn from(e: NoSuchField) -> Self {
@@ -38,7 +43,7 @@ impl Message {
         T: Into<String>,
     {
         Self {
-            header: FieldSet::with(vec![Field::String(MsgTypeField::tag(), msg_type.into())]),
+            header: FieldSet::with(vec![Field::String(35, msg_type.into())]),
             body: FieldSet::default(),
             trailer: FieldSet::default(),
         }
@@ -47,12 +52,12 @@ impl Message {
     ///
     /// # Errors
     ///
-    pub fn msg_type(&self) -> Result<MsgTypeField, UnknownMsgTypeError> {
-        match self.header.get_field(MsgTypeField::tag()) {
-            Ok(o) => o.try_into(),
-            Err(e) => Err(e.into()),
-        }
-    }
+    // pub fn msg_type(&self) -> Result<MsgTypeField, UnknownMsgTypeError> {
+    //     match self.header.get_field(35) {
+    //         Ok(o) => o.try_into(),
+    //         Err(e) => Err(e.into()),
+    //     }
+    // }
 
     ///
     /// # Errors
@@ -130,7 +135,7 @@ impl fmt::Display for Message {
 
 #[cfg(test)]
 mod tests {
-    use crate::model::generated::generated::Field;
+    use crate::model::generated::fields::Field;
     use crate::model::message::Message;
 
     #[test]
