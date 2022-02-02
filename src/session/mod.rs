@@ -1,5 +1,8 @@
+use crate::model::field::NoSuchField;
+use crate::model::generated::fields::Field;
 use crate::model::BeginString;
 use crate::model::BeginString::Fix40;
+use regex::Captures;
 
 // used to refer to a session
 #[derive(Clone, Eq, PartialEq, Hash)]
@@ -20,16 +23,36 @@ impl SessionID {
     }
 }
 
-impl From<String> for BeginString {
-    fn from(begin_string: String) -> Self {
-        match begin_string.as_str() {
-            "FIX.4.0" => BeginString::Fix40,
-            "FIX.4.1" => BeginString::Fix41,
-            "FIX.4.2" => BeginString::Fix42,
-            "FIX.4.3" => BeginString::Fix43,
-            "FIX.4.4" => BeginString::Fix44,
-            "FIX.5.0" => BeginString::Fix50,
-            _ => BeginString::Fixt11,
+pub trait Crack<T> {
+    fn crack(s: &str) -> Result<T, NoSuchField>;
+}
+
+impl Crack<BeginString> for BeginString {
+    fn crack(s: &str) -> Result<BeginString, NoSuchField> {
+        let re = regex::Regex::new("^8=(?P<begin_string>.+?)\x01").unwrap();
+        match re.captures(s) {
+            None => Err(NoSuchField { tag: 8 }),
+            Some(caps) => {
+                println!("Found {} captures: {:?}", caps.len(), caps);
+                let bs = caps.name("begin_string").unwrap().as_str().to_string();
+                BeginString::try_from(bs)
+            }
+        }
+    }
+}
+
+impl TryFrom<String> for BeginString {
+    type Error = NoSuchField;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        match value.as_str() {
+            "FIX.4.0" => Ok(BeginString::Fix40),
+            "FIX.4.1" => Ok(BeginString::Fix41),
+            "FIX.4.2" => Ok(BeginString::Fix42),
+            "FIX.4.3" => Ok(BeginString::Fix43),
+            "FIX.4.4" => Ok(BeginString::Fix44),
+            "FIX.5.0" => Ok(BeginString::Fix50),
+            _ => Err(NoSuchField { tag: 8 }),
         }
     }
 }

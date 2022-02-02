@@ -1,10 +1,12 @@
 use bytes::Bytes;
+use itertools::Itertools;
 
 use crate::application::FixApp;
-use crate::model::field::FieldSet;
+use crate::model::field::{FieldSet, NoSuchField};
 use crate::model::generated::fields::Field;
 use crate::model::message::Message;
 use crate::model::BeginString;
+use crate::session::Crack;
 
 struct Cracker<'a> {
     app: Box<dyn FixApp + 'a>,
@@ -15,8 +17,8 @@ impl Cracker<'_> {
     pub fn crack(&mut self, msg: &Bytes) {
         let msg_string = String::from_utf8_lossy(msg.as_ref()).to_string();
 
-        let m = msg_string.clone();
-        let bs: BeginString = BeginString::Fix42; //m.into();
+        let begin_string = BeginString::crack(msg_string.as_str());
+        let begin_string = begin_string.unwrap_or_else(|s| panic!("{:?}", s));
 
         let fields: Vec<Field> = msg_string
             .split('\x01')
@@ -24,7 +26,7 @@ impl Cracker<'_> {
             .into_iter()
             // .map(|s| Field::cra ::try_from(s.to_string()))
             .filter(|p| !p.is_empty())
-            .map(|s| Field::crack(bs, s))
+            .map(|s| Field::crack(begin_string, s))
             .filter_map(|s| match s {
                 Ok(o) => Some(o),
                 Err(_) => None,
