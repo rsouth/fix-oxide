@@ -6,7 +6,6 @@ use crate::model::field::{FieldSet, NoSuchField};
 use crate::model::generated::fields::Field;
 use crate::model::message::Message;
 use crate::model::BeginString;
-use crate::session::Crack;
 
 struct Cracker<'a> {
     app: Box<dyn FixApp + 'a>,
@@ -65,6 +64,10 @@ mod tests {
             println!("TestApp adding: {:#?}", message.to_string());
             self.messages.push(message);
         }
+
+        // fn on_logon(&self, message: Message) {
+        //     println!("Got logon message: {}", message);
+        // }
     }
 
     #[test]
@@ -207,5 +210,23 @@ mod tests {
             "8=FIX.4.4|35=A|38=123|58=Fix 4.4 Test|",
             fix44message.to_string()
         );
+    }
+}
+
+pub trait Crack<T> {
+    fn crack(s: &str) -> Result<T, NoSuchField>;
+}
+
+impl Crack<BeginString> for BeginString {
+    fn crack(s: &str) -> Result<BeginString, NoSuchField> {
+        let re = regex::Regex::new("^8=(?P<begin_string>.+?)\x01").unwrap();
+        match re.captures(s) {
+            None => Err(NoSuchField { tag: 8 }),
+            Some(caps) => {
+                println!("Found {} captures: {:?}", caps.len(), caps);
+                let bs = caps.name("begin_string").unwrap().as_str().to_string();
+                BeginString::try_from(bs)
+            }
+        }
     }
 }

@@ -8,6 +8,7 @@ use std::vec::IntoIter;
 
 use crate::model::generated::fields::Field;
 use crate::model::generated::fix42::MsgTypeField;
+use crate::model::BeginString;
 use itertools::Itertools;
 
 // todo thinking, nothing here should be generated; those impls in a different file
@@ -154,5 +155,37 @@ pub struct UnknownField;
 impl std::fmt::Display for UnknownField {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "error message here")
+    }
+}
+
+impl TryFrom<String> for BeginString {
+    type Error = NoSuchField;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        match value.as_str() {
+            "FIX.4.0" => Ok(BeginString::Fix40),
+            "FIX.4.1" => Ok(BeginString::Fix41),
+            "FIX.4.2" => Ok(BeginString::Fix42),
+            "FIX.4.3" => Ok(BeginString::Fix43),
+            "FIX.4.4" => Ok(BeginString::Fix44),
+            "FIX.5.0" => Ok(BeginString::Fix50),
+            _ => Err(NoSuchField { tag: 8 }),
+        }
+    }
+}
+
+impl From<BeginString> for String {
+    fn from(begin_string: BeginString) -> Self {
+        match begin_string {
+            BeginString::Fix40 => "FIX.4.0".to_string(),
+            BeginString::Fix41 => "FIX.4.1".to_string(),
+            BeginString::Fix42 => "FIX.4.2".to_string(),
+            BeginString::Fix43 => "FIX.4.3".to_string(),
+            BeginString::Fix44 => "FIX.4.4".to_string(),
+            BeginString::Fix50 => "FIX.5.0".to_string(),
+            BeginString::Fix50Sp1 => "TODO".to_string(),
+            BeginString::Fix50Sp2 => "TODO".to_string(),
+            BeginString::Fixt11 => "TODO".to_string(),
+        }
     }
 }
