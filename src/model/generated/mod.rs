@@ -41,11 +41,16 @@ mod tests {
         let mut fs = FieldSet::default(); // ::with(ss);
 
         // todo need to support pre-FIX.4.2 char-string type.
-        // fs.set_field_2(MsgTypeField::new('A'));
-        // fs.set_field_2(AccountField::new('1'));
-        // fs.set_field_2(ClOrdIDField::new("123"));
-        // fs.set_field_2(OrderQtyField::new(123));
-        // fs.set_field_2(Field::String(60000, "BOOK SHELF".to_string()));
+        fs.set_field_2(MsgTypeField::new('A'));
+        fs.set_field_2(AccountField::new('1'));
+        fs.set_field_2(ClOrdIDField::new("123"));
+        fs.set_field_2(OrderQtyField::new(123));
+        fs.set_field_2(Field::String(60000, "BOOK SHELF".to_string()));
+        println!("{}", fs);
+
+        fs.set_field_2(MsgTypeField::new("AI"));
+        // let f = Field::String(123, "TEST".to_string());
+        // let v = f.value();
 
         println!("{}", fs);
     }

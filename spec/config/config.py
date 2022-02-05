@@ -8,8 +8,8 @@ def _init_return_types():
         'STRING': {DEFAULT_KEY: '&str'},
         'CHAR': {
             DEFAULT_KEY: 'char',
-            'fix.4.0': '&str',
-            'fix.4.1': '&str'
+            'fix40': '&str',
+            'fix41': '&str'
         },
         'PRICE': {DEFAULT_KEY: '&Decimal'},
         'INT': {DEFAULT_KEY: 'i32'},
@@ -23,7 +23,11 @@ def _init_struct_types():
     return {
         'STRING': {DEFAULT_KEY: 'String'},
         # todo char fix < 4.2
-        'CHAR': {DEFAULT_KEY: 'char'},
+        'CHAR': {
+            DEFAULT_KEY: 'char',
+            'fix40': 'String',
+            'fix41': 'String'
+        },
         'PRICE': {DEFAULT_KEY: 'Decimal'},
         'INT': {DEFAULT_KEY: 'i32'},
         'AMT': {DEFAULT_KEY: 'i32'},
@@ -36,7 +40,11 @@ def _init_method_names():
     return {
         'STRING': {DEFAULT_KEY: 'str'},
         # todo char < fix 4.2
-        'CHAR': {DEFAULT_KEY: 'char'},
+        'CHAR': {
+            DEFAULT_KEY: 'char',
+            'fix40': 'str',
+            'fix41': 'str'
+        },
         'PRICE': {DEFAULT_KEY: 'decimal'},
         'INT': {DEFAULT_KEY: 'i32'},
         'AMT': {DEFAULT_KEY: 'i32'},
@@ -48,7 +56,11 @@ def _init_method_names():
 def _init_enum_variant():
     return {
         'STRING': {DEFAULT_KEY: 'String'},
-        'CHAR': {DEFAULT_KEY: 'Char'},
+        'CHAR': {
+            DEFAULT_KEY: 'Char',
+            'fix40': 'String',
+            'fix41': 'String'
+        },
         'PRICE': {DEFAULT_KEY: 'Decimal'},
         'INT': {DEFAULT_KEY: 'Int'},
         'AMT': {DEFAULT_KEY: 'Int'},
@@ -91,6 +103,10 @@ class Config:
     def enum_variant_for(self, field: Field) -> str:
         m_name = self._enum_varient.get(field.type)
         return m_name.get(field.version, m_name.get(DEFAULT_KEY, ERROR))
+
+    def all_enum_variants_for(self, field: Field) -> [str]:
+        m_name = self._enum_varient.get(field.type)
+        return list(m_name.values())
 
     def parse_fn_for(self, enum_type: str):
         return self._parse_functn.get(enum_type, ERROR)

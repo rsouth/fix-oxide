@@ -78,9 +78,9 @@ class Writer:
 
         for field in fields:
             return_type = self.config.return_type_for(field)
-            if self.config.should_process_type(field.type) and return_type not in _seen_types:
-                method_name = self.config.method_name_for(field)
-                enum_variant = self.config.enum_variant_for(field)
+            method_name = self.config.method_name_for(field)
+            enum_variant = self.config.enum_variant_for(field)
+            if self.config.should_process_type(field.type) and method_name not in _seen_types and enum_variant not in _seen_enum_variants:
                 # todo "if return_type.startswith ..." should be in config, and there's another place where similar is done.
                 self.write(f"    ///")
                 self.write(f"    /// # Errors")
@@ -105,7 +105,7 @@ class Writer:
                 self.write(f"    }}")
                 self.write_newline()
                 _seen_enum_variants.append(enum_variant)
-                _seen_types.append(return_type)
+                _seen_types.append(method_name)
 
         # Field::tag(&self)
         self.write(f"    #[must_use]")
