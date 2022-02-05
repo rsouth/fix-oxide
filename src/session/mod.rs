@@ -1,10 +1,5 @@
 pub mod settings;
 
-use crate::model::field::NoSuchField;
-use crate::model::generated::fields::Field;
-use crate::model::BeginString;
-use crate::model::BeginString::Fix40;
-use regex::Captures;
 use settings::Settings;
 use std::fmt::{Display, Formatter};
 
@@ -43,10 +38,7 @@ mod tests {
     use crate::engine::filestore::FileStore;
     use crate::engine::{Engine, State};
     use crate::model::BeginString;
-    use crate::session::settings::{
-        ConnectionSettings, ScheduleSettings, SessionSettings, SessionType, Settings,
-        SettingsBuilder,
-    };
+    use crate::session::settings::{SessionType, Settings, SettingsBuilder};
 
     #[test]
     fn it_works() {

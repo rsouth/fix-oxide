@@ -7,7 +7,7 @@ use std::fmt::Formatter;
 use crate::engine::FailedToCreateSession::SessionNotFound;
 use crate::model::generated::fields::Field;
 use crate::model::message::Message;
-use crate::model::BeginString;
+
 use crate::session::settings::Settings;
 use crate::session::SessionID;
 
@@ -33,11 +33,12 @@ impl fmt::Display for FailedToCreateSession {
 }
 
 impl Engine {
+    #[must_use]
     pub fn create(store: Box<dyn filestore::Store>) -> Self {
         Engine {
             sessions: vec![],
-            session_settings: Default::default(),
-            session_state: Default::default(),
+            session_settings: HashMap::default(),
+            session_state: HashMap::default(),
             filestore: store,
         }
     }
@@ -77,14 +78,13 @@ impl Engine {
         self.session_state.get(session_id)
     }
 
-    pub fn logon_session(&mut self, _session: &SessionID) {
+    pub fn logon_session(&mut self, session: &SessionID) {
         let mut logon_msg = Message::default(); // todo change this when message generaation is done
-        logon_msg.set_field(Field::String(8, _session.begin_string.to_string()));
+        logon_msg.set_field(Field::String(8, session.begin_string.to_string()));
         logon_msg.set_field(Field::String(35, "A".to_string()));
 
-        if let Ok(_) = self.send(_session, logon_msg) {
-            self.session_state
-                .insert(_session.clone(), State::LoginSent); // todo Login Sent
+        if self.send(session, logon_msg).is_ok() {
+            self.session_state.insert(session.clone(), State::LoginSent); // todo Login Sent
         }
     }
 

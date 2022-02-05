@@ -7,7 +7,7 @@ pub struct ConnectionSettings {
 }
 
 impl ConnectionSettings {
-    fn default_heartbeat_interval() -> u16 {
+    const fn default_heartbeat_interval() -> u16 {
         5_000
     }
 }
@@ -18,7 +18,7 @@ pub struct SessionSettings {
 }
 
 impl SessionSettings {
-    fn default_reset_on_logon() -> bool {
+    const fn default_reset_on_logon() -> bool {
         false
     }
 }
@@ -76,12 +76,13 @@ impl SettingsBuilder {
         self
     }
 
+    #[must_use]
     pub fn build(&self) -> Settings {
         Settings {
-            begin_string: self.begin_string.clone(),
+            begin_string: self.begin_string,
             sender_comp_id: self.sender_comp_id.clone(),
             target_comp_id: self.target_comp_id.clone(),
-            session_type: self.session_type.clone(),
+            session_type: self.session_type,
             session_settings: SessionSettings {
                 reset_on_logon: self.reset_on_logon,
             },

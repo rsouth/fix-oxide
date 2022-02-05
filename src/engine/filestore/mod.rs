@@ -1,9 +1,4 @@
 use crate::session::SessionID;
-use std::future::Future;
-use std::io::Read;
-use tokio::fs::File;
-use tokio::io;
-use tokio::io::AsyncReadExt;
 
 pub trait Store {
     fn init(&mut self, session_id: &SessionID);
@@ -12,7 +7,7 @@ pub trait Store {
 }
 
 impl Store for FileStore {
-    fn init(&mut self, session_id: &SessionID) {
+    fn init(&mut self, _session_id: &SessionID) {
         // let load = tokio::fs::File::open(self.to_sender_seqnum_file(session_id));
         // tokio::spawn(load);
 
@@ -32,6 +27,6 @@ pub struct FileStore {
 
 impl FileStore {
     fn to_sender_seqnum_file(&self, session_id: &SessionID) -> String {
-        format!("{}.seqnum", session_id.to_string())
+        format!("{}.seqnum", session_id)
     }
 }

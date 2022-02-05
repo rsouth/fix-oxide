@@ -1,7 +1,5 @@
 use std::fmt;
 
-use crate::model::field::FieldSet;
-
 #[derive(Debug, Clone)]
 pub struct UnknownMsgTypeError {
     pub val: String,

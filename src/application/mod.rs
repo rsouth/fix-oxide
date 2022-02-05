@@ -18,5 +18,5 @@ pub trait FixApp {
         }
     }
 
-    fn on_logon(&self, message: Message) {}
+    fn on_logon(&self, _message: Message) {}
 }

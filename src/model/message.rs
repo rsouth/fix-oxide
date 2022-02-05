@@ -101,7 +101,7 @@ impl Message {
         // todo temp. impl.
         self.to_string()
             // .replace('|', '\x01'.to_string().as_str())
-            .replace("|", "\x01")
+            .replace('|', "\x01")
             .into_bytes()
     }
 

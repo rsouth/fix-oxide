@@ -5,7 +5,7 @@ pub mod message_type;
 
 #[cfg(test)]
 mod tests {
-    use crate::model::BeginString;
+
     use std::ops::AddAssign;
 
     use crate::model::field::FieldSet;
@@ -36,7 +36,7 @@ mod tests {
 
         let msg_type = Field::String(35, "A".to_string());
 
-        assert_eq!(msg_type, msg.get_field(35).to_owned());
+        assert_eq!(msg_type, msg.get_field(35).clone());
         // assert_eq!(1, msg.header().iter().count());
     }
 }

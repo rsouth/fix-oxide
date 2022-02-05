@@ -1,11 +1,12 @@
 use core::fmt;
-use std::any::Any;
+
 use std::borrow::BorrowMut;
 use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 use std::vec::IntoIter;
 
+use crate::model;
 use crate::model::generated::fields::Field;
 use crate::model::generated::fix42::MsgTypeField;
 use crate::model::BeginString;
@@ -55,7 +56,7 @@ impl FieldSet {
     pub fn get_msg_type(&self) -> Result<&str, UnknownField> {
         self.iter()
             .find_or_first(|p| p.tag() == 35)
-            .map(|i| i.as_str())
+            .map(model::generated::fields::Field::as_str)
             .ok_or(UnknownField {})
     }
 
@@ -78,7 +79,6 @@ impl FieldSet {
 
     pub fn set_field_2<T: Into<Field>>(&mut self, field: T) {
         let key = field.into();
-        let tag = key.tag();
         self.fields.borrow_mut().insert(key.tag(), key);
     }
 

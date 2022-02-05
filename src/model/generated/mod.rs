@@ -11,11 +11,11 @@ pub mod fixt11;
 
 #[cfg(test)]
 mod tests {
-    use crate::model;
+
     use crate::model::field::FieldSet;
-    use crate::model::generated::fields::{Field, StringField};
-    use crate::model::generated::fix42::MsgTypeField;
-    use crate::model::generated::*;
+    use crate::model::generated::fields::Field;
+
+    use crate::model::generated::{fix40, fix42};
     use crate::model::message::Message;
 
     #[test]
@@ -37,7 +37,7 @@ mod tests {
 
     #[test]
     fn test_fix4_0() {
-        use self::fix40::*;
+        use self::fix40::{AccountField, ClOrdIDField, MsgTypeField, OrderQtyField};
         let mut fs = FieldSet::default(); // ::with(ss);
 
         // todo need to support pre-FIX.4.2 char-string type.
@@ -57,7 +57,7 @@ mod tests {
 
     #[test]
     fn test_fix4_2() {
-        use self::fix42::*;
+        use self::fix42::{AccountField, ClOrdIDField, MsgTypeField, OrderQtyField};
         let mut fs = FieldSet::default(); // ::with(ss);
 
         fs.set_field_2(MsgTypeField::new("A"));

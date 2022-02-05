@@ -1,5 +1,4 @@
 use bytes::Bytes;
-use itertools::Itertools;
 
 use crate::application::FixApp;
 use crate::model::field::{FieldSet, NoSuchField};
