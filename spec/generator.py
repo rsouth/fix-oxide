@@ -1,4 +1,3 @@
-import os.path
 import sys
 if __name__ == '__main__' and __package__ is None:
     from os import sys, path
@@ -7,7 +6,11 @@ if __name__ == '__main__' and __package__ is None:
 import xml.etree.ElementTree as xml
 
 # https://simplabs.com/blog/2020/12/31/xml-and-rust/
+
+from os import path, listdir
+
 # from spec.parser.parser import Parser
+from config.config import Config
 from spec.parser.parser import Parser
 from spec.writer.writer import Writer
 
@@ -18,11 +21,11 @@ SPECS_DIR_NOT_FOUND=-1
 OUTPUT_DIR_NOT_FOUND=-2
 
 specs_path = sys.argv[1]
-if not os.path.exists(specs_path):
+if not path.exists(specs_path):
     exit(SPECS_DIR_NOT_FOUND)
 
 output_path = sys.argv[2]
-if not os.path.exists(output_path):
+if not path.exists(output_path):
     exit(OUTPUT_DIR_NOT_FOUND)
 
 
@@ -30,17 +33,14 @@ def looks_like_fix_specs(file: str):
     return file.startswith("FIX") and file.endswith('.xml')
 
 
-def main(spec_file: str) -> Parser:
-    spec_version = spec_file.split('.')[0]
+def parse_and_write_fix_specs(config: Config, spec_file: str, spec_version: str) -> Parser:
     print(f"Spec version {spec_version} in {spec_file}")
-    # exit(123)
 
     root = xml.parse(spec_file).getroot()
-
-    parser = Parser(root)
+    parser = Parser(root, config, spec_version)
     parser.parse_fields()
 
-    writer = Writer(output_path + '/' + spec_version + '.rs', True)
+    writer = Writer(output_path + '/' + spec_version + '.rs', config, import_fields=True)
     # writer.write_field_enum(parser.fields)
     writer.write_field_impls(spec_version, parser.fields)
     # writer.write_fieldset(parser.fields)
@@ -50,15 +50,11 @@ def main(spec_file: str) -> Parser:
     return parser
 
 
-if __name__ == "__main__":
-    import os
-    xml_files = [file for file in os.listdir('.') if looks_like_fix_specs(file)]
-    parsers = {}
-    for spec in xml_files:
-        parsers[spec] = main(spec)
+def all_fix_spec_files() -> [str]:
+    return [file for file in listdir('.') if looks_like_fix_specs(file)]
 
-    writer = Writer(output_path + '/fields.rs', False)
 
+def parse_and_write_fields(config: Config, parsers: [Parser]):
     all_fields = []
     for p in parsers:
         prs = parsers.get(p)
@@ -66,13 +62,25 @@ if __name__ == "__main__":
             if f not in all_fields:
                 all_fields.append(f)
 
-    writer.write_field_enum(xml_files, all_fields)
+    writer = Writer(output_path + '/fields.rs', config, import_fields=False)
+    writer.write_field_enum(parsers.keys(), all_fields)
     writer.write_field_struct_impl(all_fields)
     writer.write_fieldset(all_fields)
     writer.write_custom_field_impls(all_fields)
     writer.close()
 
 
+if __name__ == "__main__":
+    config = Config()
+
+    # Parse + generate Rust for all FIX specs
+    parsers = {}
+    for spec_file in all_fix_spec_files():
+        spec_version = spec_file.split('.')[0].lower()  # e.g. fix42, fix50sp1
+        parsers[spec_file] = parse_and_write_fix_specs(config, spec_file, spec_version)
+
+    # generate Field type + impls
+    parse_and_write_fields(config, parsers)
 
 
 
