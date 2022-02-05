@@ -1,11 +1,13 @@
 use core::fmt;
+use std::any::Any;
 use std::borrow::BorrowMut;
 use std::collections::HashMap;
-use std::fmt::Formatter;
+use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 use std::vec::IntoIter;
 
 use crate::model::generated::fields::Field;
+use crate::model::generated::fix42::MsgTypeField;
 use itertools::Itertools;
 
 // todo thinking, nothing here should be generated; those impls in a different file
@@ -35,6 +37,16 @@ pub struct FieldSet {
     fields: HashMap<u16, Field>,
 }
 
+impl Display for FieldSet {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            self.fields.iter().map(|t| t.1.to_string()).join("")
+        )
+    }
+}
+
 impl FieldSet {
     ///
     /// # Errors
@@ -56,6 +68,17 @@ impl FieldSet {
     pub fn set_field(&mut self, field: Field) {
         let key = field.tag();
         self.fields.borrow_mut().insert(key, field);
+    }
+
+    pub fn set_msg_type<T: Into<MsgTypeField>>(&mut self, field: T) {
+        let ket = field.into(); //.tag();
+        self.fields.borrow_mut().insert(MsgTypeField::tag(), ket.fd);
+    }
+
+    pub fn set_field_2<T: Into<Field>>(&mut self, field: T) {
+        let key = field.into();
+        let tag = key.tag();
+        self.fields.borrow_mut().insert(key.tag(), key);
     }
 
     /// # Errors

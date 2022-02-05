@@ -1,5 +1,4 @@
 import typing
-from typing import TextIO
 
 from ..config.config import return_types, struct_types, enum_variants, exclude_types, method_names
 from ..datatypes.field_utils import FieldUtils
@@ -224,6 +223,13 @@ class Writer:
                 self.write_newline()
 
                 self.write(f"impl {field.name}Field {{")
+
+                self.write(f"   pub fn new<T: Into<{struct_types.get(field.type)}>>(value: T) -> Self {{")
+                self.write(f"      {field.name}Field {{")
+                self.write(f"          fd: Field::{enum_variants.get(field.type)}({field.name}Field::tag(), value.into()),")
+                self.write(f"      }}")
+                self.write(f"   }}")
+
                 self.write(f"    #[must_use]")
                 self.write(f"    pub const fn tag() -> u16 {{")
                 self.write(f"        {field.tag}")
@@ -231,7 +237,7 @@ class Writer:
                 self.write_newline()
 
                 self.write(f"    // tag_type: {field.type}")
-                self.write(f"    fn value(&self) -> {return_types.get(field.type)} {{")
+                self.write(f"    pub fn value(&self) -> {return_types.get(field.type)} {{")
                 self.write(f"        match &self.fd {{")
                 self.write(f"            Field::{enum_variants.get(field.type)}(_, v) => {'' if return_type.startswith('&') else '*'}v,")
                 self.write(f"            _ => panic!(\"\"),")
@@ -246,21 +252,28 @@ class Writer:
                 self.write(f"    }}")
                 self.write(f"}}")
 
-                ##
-                self.write(f"impl TryFrom<&Field> for {field.name}Field {{")
-                self.write(f"    type Error = UnknownMsgTypeError;")
-                self.write_newline()
-                self.write(f"    fn try_from(value: &Field) -> Result<Self, Self::Error> {{")
-                self.write(f"        match value {{")
-
-                self.write(f"            Field::{enum_variants.get(field.type)}(_, _) => Ok(Self {{ fd: value.clone() }}),")
-
-                self.write(f"            _ => Err(UnknownMsgTypeError {{")
-                self.write(f"                val: value.to_string(),")
-                self.write(f"            }}),")
-                self.write(f"        }}")
-                self.write(f"    }}")
+                self.write(f"impl Into<Field> for {field.name}Field {{")
+                self.write(f"   fn into(self) -> Field {{")
+                self.write(f"       self.fd.into()")
+                self.write(f"   }}")
                 self.write(f"}}")
+
+
+                ##
+                # self.write(f"impl TryFrom<&Field> for {field.name}Field {{")
+                # self.write(f"    type Error = UnknownMsgTypeError;")
+                # self.write_newline()
+                # self.write(f"    fn try_from(value: &Field) -> Result<Self, Self::Error> {{")
+                # self.write(f"        match value {{")
+                #
+                # self.write(f"            Field::{enum_variants.get(field.type)}(_, _) => Ok(Self {{ fd: value.clone() }}),")
+                #
+                # self.write(f"            _ => Err(UnknownMsgTypeError {{")
+                # self.write(f"                val: value.to_string(),")
+                # self.write(f"            }}),")
+                # self.write(f"        }}")
+                # self.write(f"    }}")
+                # self.write(f"}}")
                 ##
                 enum_type_return_type[enum_variants.get(field.type)] = return_types.get(field.type)
 

@@ -13,7 +13,8 @@ pub mod fixt11;
 mod tests {
     use crate::model;
     use crate::model::field::FieldSet;
-    use crate::model::generated::fields::Field;
+    use crate::model::generated::fields::{Field, StringField};
+    use crate::model::generated::fix42::MsgTypeField;
     use crate::model::generated::*;
     use crate::model::message::Message;
 
@@ -32,5 +33,35 @@ mod tests {
         // let msg_type = fs.get_msg_type().ok().unwrap().clone();
         let mut message = Message::default();
         message.set_field(f);
+    }
+
+    #[test]
+    fn test_fix4_0() {
+        use self::fix40::*;
+        let mut fs = FieldSet::default(); // ::with(ss);
+
+        // todo need to support pre-FIX.4.2 char-string type.
+        // fs.set_field_2(MsgTypeField::new('A'));
+        // fs.set_field_2(AccountField::new('1'));
+        // fs.set_field_2(ClOrdIDField::new("123"));
+        // fs.set_field_2(OrderQtyField::new(123));
+        // fs.set_field_2(Field::String(60000, "BOOK SHELF".to_string()));
+
+        println!("{}", fs);
+    }
+
+    #[test]
+    fn test_fix4_2() {
+        use self::fix42::*;
+        let mut fs = FieldSet::default(); // ::with(ss);
+
+        fs.set_field_2(MsgTypeField::new("A"));
+        fs.set_field_2(AccountField::new("123"));
+        fs.set_field_2(ClOrdIDField::new("123"));
+        fs.set_field_2(OrderQtyField::new(123));
+        fs.set_field_2(Field::String(60000, "BOOK SHELF".to_string()));
+        // todo u16 max val too low?
+
+        println!("{}", fs);
     }
 }

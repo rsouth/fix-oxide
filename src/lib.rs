@@ -14,3 +14,5 @@ mod tests {
         assert_eq!(result, 4);
     }
 }
+
+// todo: when we load the dictionary, bring in the description for logging

@@ -11,6 +11,9 @@ return_types = {
 
 # Mapping FIX types to Rust Field enum variant types
 # e.g.  enum Field { String(Tag, <struct_type>), Int(Tag, <struct_type>) }
+# In FIX4.0 and 4.1 the spec did not include a String type, and
+# CHAR was effectively STRING. From FIX4.2 onwards, char was a single-character,
+# and the STRING type was introduced.
 struct_types = {
     'STRING': 'String',
     'CHAR': 'char',
@@ -20,6 +23,7 @@ struct_types = {
     'QTY': 'i32',
     'CURRENCY': 'String'
 }
+# todo review these mappings; may need types other than i32 (Decimal/other)
 
 # Mapping FIX types to method names
 # e.g. get_<str> get_<char>
