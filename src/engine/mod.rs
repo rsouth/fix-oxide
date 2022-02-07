@@ -9,7 +9,7 @@ use crate::model::generated::fields::Field;
 use crate::model::message::Message;
 
 use crate::session::settings::Settings;
-use crate::session::SessionID;
+use crate::session::{SessionID, State};
 
 // #[derive(Default)]
 pub struct Engine {
@@ -17,19 +17,6 @@ pub struct Engine {
     session_settings: HashMap<SessionID, Settings>,
     session_state: HashMap<SessionID, State>,
     filestore: Box<dyn filestore::Store>,
-}
-
-#[derive(Debug)]
-pub enum FailedToCreateSession {
-    InvalidSettings,
-    DuplicateSessionID,
-    SessionNotFound,
-}
-
-impl fmt::Display for FailedToCreateSession {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "error.")
-    }
 }
 
 impl Engine {
@@ -96,16 +83,15 @@ impl Engine {
     }
 }
 
-// state machine; state transitions here based on events.
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
-pub enum State {
-    Created,
-    // session has been created but not yet initialised
-    Downtime,
-    // login msg was sent, waiting for ack...
-    LoginSent,
-    // session has been initialised, but scheduled downtime is in effect
-    LoggedIn,
-    // session has been initialised, and is logged in
-    LoggedOut, // session has been initialised, but is not logged in (failed? disconnected? etc)
+#[derive(Debug)]
+pub enum FailedToCreateSession {
+    InvalidSettings,
+    DuplicateSessionID,
+    SessionNotFound,
+}
+
+impl fmt::Display for FailedToCreateSession {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "error.")
+    }
 }

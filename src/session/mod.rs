@@ -36,9 +36,10 @@ impl SessionID {
 #[cfg(test)]
 mod tests {
     use crate::engine::filestore::FileStore;
-    use crate::engine::{Engine, State};
+    use crate::engine::Engine;
     use crate::model::BeginString;
     use crate::session::settings::{SessionType, Settings, SettingsBuilder};
+    use crate::session::State;
 
     #[test]
     fn it_works() {
@@ -87,4 +88,18 @@ mod tests {
 
         engine.logon_session(&session_id2);
     }
+}
+
+// state machine; state transitions here based on events.
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+pub enum State {
+    Created,
+    // session has been created but not yet initialised
+    Downtime,
+    // login msg was sent, waiting for ack...
+    LoginSent,
+    // session has been initialised, but scheduled downtime is in effect
+    LoggedIn,
+    // session has been initialised, and is logged in
+    LoggedOut, // session has been initialised, but is not logged in (failed? disconnected? etc)
 }
